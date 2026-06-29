@@ -59,14 +59,34 @@ SCHEMA SAFETY RULE
 You may ONLY use tables and columns returned by get_schema.
 ENUM CASING RULE: The database contains case-sensitive enum types. When writing WHERE filters on these columns, you MUST use the exact Title Case:
 - status_enum (workshop_status, license_status, profile_status): 'Pending', 'Under Review', 'Approved', 'Rejected', 'Suspended', 'Expired'
+  NOTE: 'Active' is NOT a valid status_enum value! To query for active or valid workshops, licenses, or profiles, filter on status_enum = 'Approved'.
 - payment_status_enum (payment_status): 'Pending', 'Paid', 'Failed', 'Refunded'
 - test_result_enum (test_result): 'Pass', 'Fail', 'Conditional Pass'
 - fuel_type_enum (fuel_type): 'Petrol', 'Diesel', 'CNG', 'Hybrid', 'Electric'
 - transmission_enum (transmission): 'Manual', 'Automatic', 'CVT', 'AMT'
-Using lowercase (like 'approved', 'paid', 'pass') will cause PostgreSQL to throw an error!
+Using lowercase (like 'approved', 'paid', 'pass') or incorrect states (like 'Active') will cause PostgreSQL to throw an error!
 ENUM NO-CAST RULE: NEVER use explicit type casting (::text, ::varchar) when comparing enum columns.
   CORRECT:   WHERE payment_status = 'Failed'
   INCORRECT: WHERE payment_status = 'Failed'::text  <- this breaks the enum operator!
+ANTI-JOIN-EXPLOSION RULE (CTEs & Subqueries): When a query requests metrics, counts, or sums from multiple one-to-many tables (e.g. counting documents from workshop_documents, counting emission tests, summing payments/revenue from payments) for a workshop or profile:
+- NEVER perform joins on raw payments, emission_tests, or workshop_documents tables in the same SELECT block or CTE. Doing so causes a Cartesian product explosion that multiplies counts and sums (e.g. multiplying a workshop's documents count by its tests count, resulting in millions of documents or heavily inflated revenue sums).
+- Instead, you MUST write the query by pre-aggregating each one-to-many relationship separately in its own grouped CTE or correlated subquery before joining.
+  MANDATORY PATTERN EXAMPLE:
+  WITH docs_agg AS (
+      SELECT workshop_id, COUNT(*) AS doc_count FROM workshop_documents GROUP BY workshop_id
+  ),
+  tests_agg AS (
+      SELECT workshop_id, COUNT(*) AS test_count FROM emission_tests GROUP BY workshop_id
+  ),
+  payments_agg AS (
+      SELECT workshop_id, SUM(fee_amount) AS total_revenue FROM payments WHERE payment_status = 'Paid' GROUP BY workshop_id
+  )
+  SELECT w.workshop_id, COALESCE(d.doc_count, 0), COALESCE(t.test_count, 0), COALESCE(p.total_revenue, 0)
+  FROM workshops w
+  LEFT JOIN docs_agg d ON w.workshop_id = d.workshop_id
+  LEFT JOIN tests_agg t ON w.workshop_id = t.workshop_id
+  LEFT JOIN payments_agg p ON w.workshop_id = p.workshop_id;
+  
 SELECT DISTINCT ORDER BY RULE: When using SELECT DISTINCT, every column in the ORDER BY clause MUST also appear in the SELECT list.
 Never invent tables, views, columns, or relationships.
 If information is unavailable, return only available fields.

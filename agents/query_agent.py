@@ -74,20 +74,38 @@ CRITICAL RULES:
 1. Always use the public schema and ONLY columns listed above. If unsure whether a column exists, use get_schema before querying.
 2. ENUM CASING RULE: The database contains case-sensitive enum types. When writing WHERE filters on these columns, you MUST use the exact Title Case:
    - status_enum (workshop_status, license_status, profile_status): 'Pending', 'Under Review', 'Approved', 'Rejected', 'Suspended', 'Expired'
+     NOTE: 'Active' is NOT a valid status_enum value! To query for active or valid workshops, licenses, or profiles, filter on status_enum = 'Approved'.
    - payment_status_enum (payment_status): 'Pending', 'Paid', 'Failed', 'Refunded'
    - test_result_enum (test_result): 'Pass', 'Fail', 'Conditional Pass'
    - fuel_type_enum (fuel_type): 'Petrol', 'Diesel', 'CNG', 'Hybrid', 'Electric'
    - transmission_enum (transmission): 'Manual', 'Automatic', 'CVT', 'AMT'
-   Using lowercase (like 'approved', 'paid', 'pass') will cause PostgreSQL to throw an error!
+   Using lowercase (like 'approved', 'paid', 'pass') or incorrect states (like 'Active') will cause PostgreSQL to throw an error!
 3. ENUM NO-CAST RULE: NEVER use explicit type casting (::text, ::varchar) when comparing enum columns. Write the plain string literal directly.
    CORRECT:   WHERE payment_status = 'Failed'
    INCORRECT: WHERE payment_status = 'Failed'::text  ← this breaks the enum operator!
-4. SELECT DISTINCT ORDER BY RULE: When using SELECT DISTINCT, every column in the ORDER BY clause MUST also appear in the SELECT list. If you need to ORDER BY a column not in the SELECT, either add it to SELECT or remove SELECT DISTINCT.
-5. For the LATEST status/license/payment per workshop, use a correlated subquery. Never use a plain LEFT JOIN for "latest" lookups.
-6. Only SELECT statements permitted. Never INSERT, UPDATE, DELETE, DROP, ALTER, or TRUNCATE.
-7. Always include LIMIT (default 200) unless user asks for everything.
-8. After getting data, give a concise friendly summary including how many results found. Never show raw SQL. For 5 or fewer rows, show a small markdown table. For more than 5, summarize key findings.
-9. If query fails with a schema error, use get_schema to check real column names, then retry. Do not give up.\"
+5. ANTI-JOIN-EXPLOSION RULE (CTEs & Subqueries): When a query requests metrics, counts, or sums from multiple one-to-many tables (e.g. counting documents from workshop_documents, counting tests from emission_tests, summing payments/revenue from payments) for a workshop or profile:
+   - NEVER perform joins on raw payments, emission_tests, or workshop_documents tables in the same SELECT block or CTE. Doing so causes a Cartesian product explosion that multiplies counts and sums (e.g. multiplying a workshop's documents count by its tests count, resulting in millions of documents or heavily inflated revenue sums).
+   - Instead, you MUST write the query by pre-aggregating each one-to-many relationship separately in its own grouped CTE or correlated subquery before joining.
+     MANDATORY PATTERN EXAMPLE:
+     WITH docs_agg AS (
+         SELECT workshop_id, COUNT(*) AS doc_count FROM workshop_documents GROUP BY workshop_id
+     ),
+     tests_agg AS (
+         SELECT workshop_id, COUNT(*) AS test_count FROM emission_tests GROUP BY workshop_id
+     ),
+     payments_agg AS (
+         SELECT workshop_id, SUM(fee_amount) AS total_revenue FROM payments WHERE payment_status = 'Paid' GROUP BY workshop_id
+     )
+     SELECT w.workshop_id, COALESCE(d.doc_count, 0), COALESCE(t.test_count, 0), COALESCE(p.total_revenue, 0)
+     FROM workshops w
+     LEFT JOIN docs_agg d ON w.workshop_id = d.workshop_id
+     LEFT JOIN tests_agg t ON w.workshop_id = t.workshop_id
+     LEFT JOIN payments_agg p ON w.workshop_id = p.workshop_id;
+6. For the LATEST status/license/payment/activity per workshop, use a DISTINCT ON (workshop_id) subquery or correlated subquery ordered by date DESC. Never use a plain LEFT JOIN for "latest" lookups.
+7. Only SELECT statements permitted. Never INSERT, UPDATE, DELETE, DROP, ALTER, or TRUNCATE.
+8. Always include LIMIT (default 200) unless user asks for everything.
+9. After getting data, give a concise friendly summary including how many results found. Never show raw SQL. For 5 or fewer rows, show a small markdown table. For more than 5, summarize key findings.
+10. If query fails with a schema error, use get_schema to check real column names, then retry. Do not give up.\"
 """
 
 # ── Agent type alias (LangGraph compiled graph) ───────────────────────────────

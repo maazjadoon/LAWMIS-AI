@@ -44,6 +44,15 @@ _FIELD_ALIASES = {
     "created_at": "Created",
     "father_name": "Father's Name",
     "workshop_owner_name": "Owner Name",
+    "owner_profile_full_name": "Owner Name",
+    "system_username": "Username",
+    "total_uploaded_documents": "Docs",
+    "license_category": "Category",
+    "payment_mode": "Pay Mode",
+    "rta_inspection_total_score": "RTA Score",
+    "total_emission_tests": "Tests",
+    "total_vehicles_tested": "Vehicles",
+    "notes": "Latest Activity",
 }
 
 
@@ -86,17 +95,19 @@ def normalize_data_for_export(records: list[dict]) -> tuple[list[str], list[list
     # Get all keys present in the first record
     keys = list(records[0].keys())
 
-    # If the database returns 6 or fewer columns (i.e. a specific lookup query),
+    # If the database returns 15 or fewer columns (i.e. a specific lookup query),
     # preserve all of them so we do not strip explicitly requested fields.
-    if len(keys) <= 6:
+    if len(keys) <= 15:
         display_cols = keys
     else:
-        # Otherwise (e.g. SELECT *), pick the best 6 columns from our preferred list
-        display_cols = [col for col in _PREFERRED_COLS if col in keys]
-        if not display_cols:
-            display_cols = keys[:6]
+        # Otherwise (e.g. SELECT *), pick the best 8 columns from our preferred list.
+        # If preferred columns are present and represent a substantial part of the result,
+        # use them; otherwise, default to the query's direct SELECT order.
+        preferred_in_keys = [col for col in keys if col in _PREFERRED_COLS]
+        if len(preferred_in_keys) >= 4:
+            display_cols = preferred_in_keys[:8]
         else:
-            display_cols = display_cols[:6]
+            display_cols = keys[:8]
 
     # Generate headers using aliases or fallback Title Case conversion
     headers = [_FIELD_ALIASES.get(col, _snake_to_title(col)) for col in display_cols]

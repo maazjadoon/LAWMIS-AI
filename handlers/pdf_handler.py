@@ -6,6 +6,7 @@ Shares _fetch_kpi_data logic with pptx_handler via a common import.
 """
 
 import logging
+from pathlib import Path
 from typing import Any
 
 import config
@@ -37,9 +38,11 @@ def handle_pdf(agent: Any, chat_input: str) -> str:
         try:
             kpi = _fetch_kpi_data()
             path = generate_pdf(kpi)
+            filename = Path(path).name
             return (
                 f"✅ KPI PDF report generated successfully!\n\n"
-                f"📂 Saved to: {path}\n\n"
+                f"📂 Saved to: {path}\n"
+                f"🔗 Download Link: http://localhost:8000/exports/{filename}\n\n"
                 f"The report covers Workshops, Licenses, Payments, Emission Tests, "
                 f"Inspections, Top Cities, and Monthly Trends."
             )
@@ -77,9 +80,11 @@ def handle_pdf(agent: Any, chat_input: str) -> str:
 
         headers, rows = normalize_data_for_export(records)
         path = generate_tabular_pdf(headers, rows, title)
+        filename = Path(path).name
         return (
             f"✅ Custom PDF report generated successfully!\n\n"
-            f"📂 Saved to: {path}\n\n"
+            f"📂 Saved to: {path}\n"
+            f"🔗 Download Link: http://localhost:8000/exports/{filename}\n\n"
             f"The report contains a table displaying {len(rows)} matching records."
         )
     except Exception as exc:

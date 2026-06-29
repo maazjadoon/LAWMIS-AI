@@ -63,11 +63,12 @@ SQL RULES
 Only generate SELECT statements. Never generate INSERT, UPDATE, DELETE, DROP, ALTER, TRUNCATE, or CREATE.
 ENUM CASING RULE: The database contains case-sensitive enum types. When writing WHERE filters or CASE WHEN clauses on these columns, you MUST use the exact Title Case:
 - status_enum (workshop_status, license_status, profile_status): 'Pending', 'Under Review', 'Approved', 'Rejected', 'Suspended', 'Expired'
+  NOTE: 'Active' is NOT a valid status_enum value! To query for active or valid workshops, licenses, or profiles, filter on status_enum = 'Approved'.
 - payment_status_enum (payment_status): 'Pending', 'Paid', 'Failed', 'Refunded'
 - test_result_enum (test_result): 'Pass', 'Fail', 'Conditional Pass'
 - fuel_type_enum (fuel_type): 'Petrol', 'Diesel', 'CNG', 'Hybrid', 'Electric'
 - transmission_enum (transmission): 'Manual', 'Automatic', 'CVT', 'AMT'
-Using lowercase (like 'approved', 'paid', 'pass') will cause PostgreSQL to throw an error!
+Using lowercase (like 'approved', 'paid', 'pass') or incorrect states (like 'Active') will cause PostgreSQL to throw an error!
 ENUM NO-CAST RULE: NEVER use explicit type casting (::text, ::varchar) when comparing enum columns. Write plain string literals only.
   CORRECT:   WHERE payment_status = 'Failed'
   INCORRECT: WHERE payment_status = 'Failed'::text  <- this breaks the enum operator!

@@ -235,6 +235,34 @@ export default function App() {
 
   // Format assistant replies containing tables/lists into markdown-like JSX
   const renderMessageContent = (text: string) => {
+    // Check if the text contains a file path for downloads
+    const savedToMatch = text.match(/Saved to:\s*([^\n]+)/);
+    let downloadLink = null;
+    
+    if (savedToMatch) {
+      const fullPath = savedToMatch[1].trim();
+      const filename = fullPath.replace(/\\/g, '/').split('/').pop() || '';
+      if (filename) {
+        downloadLink = (
+          <div className="mt-2 pt-2 border-t border-white/[0.03] select-none">
+            <a 
+              href={`http://localhost:8000/exports/${filename}`} 
+              target="_blank" 
+              rel="noreferrer" 
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-indigo-600 hover:bg-indigo-500 text-white transition-all duration-300 text-[10px] font-semibold tracking-tight shadow-[0_0_15px_-3px_rgba(99,102,241,0.3)] outline-none"
+            >
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              <span>Download & Open Report</span>
+            </a>
+          </div>
+        );
+      }
+    }
+
     if (text.includes('|')) {
       const lines = text.split('\n');
       const tableLines = lines.filter(l => l.includes('|'));
@@ -272,12 +300,18 @@ export default function App() {
               </table>
             </div>
             {postTable.trim() && <p className="whitespace-pre-wrap text-xs text-zinc-400 leading-normal tracking-tight">{postTable}</p>}
+            {downloadLink}
           </div>
         );
       }
     }
 
-    return <p className="whitespace-pre-wrap text-xs text-zinc-300 leading-relaxed tracking-tight">{text}</p>;
+    return (
+      <div className="space-y-2">
+        <p className="whitespace-pre-wrap text-xs text-zinc-300 leading-relaxed tracking-tight">{text}</p>
+        {downloadLink}
+      </div>
+    );
   };
 
   return (
@@ -287,16 +321,16 @@ export default function App() {
       <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-indigo-500/5 blur-[120px] pointer-events-none z-0" />
       
       {/* Sidebar Navigation */}
-      <aside className="w-[200px] bg-surface border-r border-white/[0.03] flex flex-col p-2 z-10 relative">
-        <div className="flex items-center gap-1.5 p-1 mb-4">
-          <div className="w-4 h-4 rounded bg-indigo-500/15 flex items-center justify-center border border-indigo-500/30">
-            <svg className="w-2.5 h-2.5 text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <aside className="w-[200px] bg-surface border-r border-white/[0.03] flex flex-col p-2 z-10 relative select-none">
+        <div className="flex items-center gap-2.5 p-2 mb-6">
+          <div className="w-8 h-8 rounded bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 shadow-[0_0_15px_-3px_rgba(99,102,241,0.2)]">
+            <svg className="w-4.5 h-4.5 text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polygon points="12 2 2 7 12 12 22 7 12 2" />
               <polyline points="2 17 12 22 22 17" />
               <polyline points="2 12 12 17 22 12" />
             </svg>
           </div>
-          <span className="text-sm font-semibold tracking-tight text-zinc-100">LAWMIS Panel</span>
+          <span className="text-sm font-bold tracking-tight text-zinc-100">LAWMIS AI</span>
         </div>
         
         <nav className="flex flex-col gap-1">
@@ -347,7 +381,7 @@ export default function App() {
             <span>Reports & Docs</span>
           </button>
         </nav>
-
+ 
         <div className="mt-auto border-t border-white/[0.03] pt-2">
           <div className="flex items-center gap-1.5 p-1 text-[10px] text-zinc-500 font-mono">
             <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full shadow-[0_0_8px_rgba(99,102,241,0.5)]"></span>
@@ -355,12 +389,12 @@ export default function App() {
           </div>
         </div>
       </aside>
-
+ 
       {/* Main Panel Content */}
-      <main className="flex-1 flex flex-col h-screen relative z-10 overflow-hidden">
+      <main className="flex-1 flex flex-col h-screen relative z-10 overflow-hidden select-text">
         
         {/* Top Header */}
-        <header className="h-[40px] border-b border-white/[0.03] bg-surface/50 backdrop-blur-md px-3 flex items-center justify-between">
+        <header className="h-[40px] border-b border-white/[0.03] bg-surface/50 backdrop-blur-md px-3 flex items-center justify-between select-none">
           <div className="flex items-center gap-1.5">
             <span className="text-sm font-semibold text-zinc-100">
               {activeTab === 'chat' && 'Assistant Intelligence'}
@@ -375,32 +409,108 @@ export default function App() {
             </span>
           </div>
         </header>
-
+ 
         {/* Dynamic Panels */}
-        <section className="flex-1 overflow-y-auto p-2">
+        <section className="flex-1 overflow-y-auto p-2 select-text">
           
           {/* TAB 1: CHAT PANEL */}
           {activeTab === 'chat' && (
-            <div className="flex flex-col h-full max-w-[800px] mx-auto w-full">
-              <div className="flex-1 overflow-y-auto space-y-2 pr-1 pb-4">
-                {messages.map(msg => (
-                  <div key={msg.id} className={`flex w-full ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[75%] rounded px-2.5 py-2 transition-all duration-300 ${
-                      msg.sender === 'user'
-                        ? 'bg-indigo-500/10 border border-indigo-500/20 text-zinc-100 rounded-br-none'
-                        : 'bg-[#090d16] border border-white/[0.03] text-zinc-300 rounded-bl-none shadow-glow hover:border-white/[0.08]'
-                    }`}>
-                      {renderMessageContent(msg.text)}
+            <div className="flex flex-col h-full max-w-[800px] mx-auto w-full select-text">
+              <div className="flex-1 overflow-y-auto space-y-4 pr-1 pb-4 flex flex-col select-text">
+                {messages.length === 1 && messages[0].id === 'welcome' ? (
+                  /* Welcome Landing Hero (Premium Centered State with Big Icon) */
+                  <div className="flex-1 flex flex-col items-center justify-center text-center px-4 py-8 select-text">
+                    <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-5 shadow-[0_0_50px_-12px_rgba(99,102,241,0.35)] animate-pulse flex-shrink-0">
+                      <svg className="w-9 h-9 text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polygon points="12 2 2 7 12 12 22 7 12 2" />
+                        <polyline points="2 17 12 22 22 17" />
+                        <polyline points="2 12 12 17 22 12" />
+                      </svg>
+                    </div>
+                    <h2 className="text-sm font-semibold text-zinc-100 tracking-tight mb-1.5 select-none">LAWMIS Intelligence Assistant</h2>
+                    <p className="max-w-[460px] text-xs text-zinc-400 leading-relaxed mb-6 font-medium select-none">
+                      Query workshops, track payment challans, inspect emission test histories, or attach files to run deep document Q&A.
+                    </p>
+                    
+                    <div className="grid grid-cols-2 gap-2 max-w-[560px] w-full select-none">
+                      <button 
+                        type="button"
+                        onClick={() => setChatInput("Show active workshops in Lahore")}
+                        className="text-left p-3 rounded bg-white/[0.01] border border-white/[0.03] hover:border-indigo-500/30 hover:bg-indigo-500/[0.03] text-zinc-400 hover:text-zinc-200 transition-all duration-300 outline-none cursor-pointer"
+                      >
+                        <p className="font-semibold text-xs text-zinc-300 mb-0.5">List Workshops</p>
+                        <p className="text-[10px] text-zinc-500">"Show active workshops in Lahore"</p>
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={() => setChatInput("List the first 5 workshops with owner name and city and convert to pdf")}
+                        className="text-left p-3 rounded bg-white/[0.01] border border-white/[0.03] hover:border-indigo-500/30 hover:bg-indigo-500/[0.03] text-zinc-400 hover:text-zinc-200 transition-all duration-300 outline-none cursor-pointer"
+                      >
+                        <p className="font-semibold text-xs text-zinc-300 mb-0.5">Export Reports</p>
+                        <p className="text-[10px] text-zinc-500">"Generate a PDF report of workshops..."</p>
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={() => setChatInput("Show total revenue by city for paid payments")}
+                        className="text-left p-3 rounded bg-white/[0.01] border border-white/[0.03] hover:border-indigo-500/30 hover:bg-indigo-500/[0.03] text-zinc-400 hover:text-zinc-200 transition-all duration-300 outline-none cursor-pointer"
+                      >
+                        <p className="font-semibold text-xs text-zinc-300 mb-0.5">View Analytics</p>
+                        <p className="text-[10px] text-zinc-500">"Show total revenue by city for paid payments"</p>
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={() => setChatInput("Show me the KPI dashboard")}
+                        className="text-left p-3 rounded bg-white/[0.01] border border-white/[0.03] hover:border-indigo-500/30 hover:bg-indigo-500/[0.03] text-zinc-400 hover:text-zinc-200 transition-all duration-300 outline-none cursor-pointer"
+                      >
+                        <p className="font-semibold text-xs text-zinc-300 mb-0.5">Health Metrics</p>
+                        <p className="text-[10px] text-zinc-500">"Show me the KPI dashboard"</p>
+                      </button>
                     </div>
                   </div>
-                ))}
+                ) : (
+                  /* Message Bubbles list */
+                  messages.map(msg => (
+                    <div key={msg.id} className={`flex w-full items-start gap-3 select-text ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      {msg.sender === 'assistant' && (
+                        <div className="w-8 h-8 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-[0_0_15px_-3px_rgba(99,102,241,0.2)]">
+                          <svg className="w-4.5 h-4.5 text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polygon points="12 2 2 7 12 12 22 7 12 2" />
+                            <polyline points="2 17 12 22 22 17" />
+                            <polyline points="2 12 12 17 22 12" />
+                          </svg>
+                        </div>
+                      )}
+                      
+                      <div className={`max-w-[78%] rounded-lg px-3.5 py-2.5 transition-all duration-300 select-text cursor-text ${
+                        msg.sender === 'user'
+                          ? 'bg-indigo-500/15 border border-indigo-500/25 text-zinc-100 rounded-tr-none'
+                          : 'bg-[#090d16] border border-white/[0.03] text-zinc-300 rounded-tl-none shadow-glow hover:border-white/[0.08]'
+                      }`}>
+                        {renderMessageContent(msg.text)}
+                      </div>
+
+                      {msg.sender === 'user' && (
+                        <div className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center flex-shrink-0 mt-0.5 text-zinc-300 font-bold text-[10px] select-none">
+                          U
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
                 
                 {isTyping && (
-                  <div className="flex w-full justify-start">
-                    <div className="bg-[#090d16] border border-white/[0.03] rounded rounded-bl-none px-3 py-2 flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 bg-indigo-500/40 rounded-full animate-pulse"></span>
-                      <span className="w-1.5 h-1.5 bg-indigo-500/60 rounded-full animate-pulse delay-75"></span>
-                      <span className="w-1.5 h-1.5 bg-indigo-500/80 rounded-full animate-pulse delay-150"></span>
+                  <div className="flex w-full justify-start items-start gap-3 select-text">
+                    <div className="w-8 h-8 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-[0_0_15px_-3px_rgba(99,102,241,0.2)]">
+                      <svg className="w-4.5 h-4.5 text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polygon points="12 2 2 7 12 12 22 7 12 2" />
+                        <polyline points="2 17 12 22 22 17" />
+                        <polyline points="2 12 12 17 22 12" />
+                      </svg>
+                    </div>
+                    <div className="bg-[#090d16] border border-white/[0.03] rounded-lg rounded-bl-none px-3.5 py-2 flex items-center gap-1 select-none">
+                      <span className="w-1.5 h-1.5 bg-indigo-500/40 rounded-full animate-bounce"></span>
+                      <span className="w-1.5 h-1.5 bg-indigo-500/60 rounded-full animate-bounce [animation-delay:0.2s]"></span>
+                      <span className="w-1.5 h-1.5 bg-indigo-500/80 rounded-full animate-bounce [animation-delay:0.4s]"></span>
                     </div>
                   </div>
                 )}
@@ -672,14 +782,27 @@ export default function App() {
                   documents.map(doc => (
                     <div key={doc.id} className="bg-[#090d16] border border-white/[0.03] rounded p-2.5 flex items-center justify-between hover:border-white/[0.08] transition-all duration-300">
                       <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded bg-white/[0.02] border border-white/[0.03] flex items-center justify-center text-zinc-400">
+                        <a 
+                          href={`http://localhost:8000/exports/${doc.name}`} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="w-7 h-7 rounded bg-white/[0.02] border border-white/[0.03] flex items-center justify-center text-zinc-400 hover:text-indigo-400 hover:border-indigo-500/30 transition-all duration-300 outline-none"
+                        >
                           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                            <polyline points="14 2 14 8 20 8" />
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="7 10 12 15 17 10" />
+                            <line x1="12" y1="15" x2="12" y2="3" />
                           </svg>
-                        </div>
+                        </a>
                         <div>
-                          <p className="text-xs font-medium text-zinc-200">{doc.name}</p>
+                          <a 
+                            href={`http://localhost:8000/exports/${doc.name}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-xs font-semibold text-zinc-200 hover:text-indigo-400 hover:underline transition-colors"
+                          >
+                            {doc.name}
+                          </a>
                           <p className="text-[10px] text-zinc-500 font-mono">{doc.type.toUpperCase()} • Generated {doc.timestamp}</p>
                         </div>
                       </div>

@@ -170,6 +170,7 @@ def _build_fastapi_app():
     """
     from fastapi import FastAPI, HTTPException, UploadFile, File
     from fastapi.middleware.cors import CORSMiddleware
+    from fastapi.staticfiles import StaticFiles
     from pydantic import BaseModel
     from pathlib import Path
     import shutil
@@ -191,6 +192,9 @@ def _build_fastapi_app():
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Mount static exports directory to serve PDF/PPTX reports
+    app.mount("/exports", StaticFiles(directory=config.EXPORTS_DIR), name="exports")
 
     class ChatRequest(BaseModel):
         message: str

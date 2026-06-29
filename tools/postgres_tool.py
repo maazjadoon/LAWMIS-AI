@@ -112,8 +112,24 @@ def execute_query(query: str, config: RunnableConfig = None) -> list[dict[str, A
             "INSERT, UPDATE, DELETE, DROP, ALTER, TRUNCATE, and CREATE are blocked."
         )
 
+    # Log the query to a debug file for easy inspection/SQA
+    try:
+        from pathlib import Path
+        import config as app_config
+        log_dir = Path(app_config.EXPORTS_DIR)
+        log_dir.mkdir(parents=True, exist_ok=True)
+        with open(log_dir / "executed_queries.log", "a", encoding="utf-8") as f:
+            f.write(f"\n--- QUERY EXECUTION AT {time.strftime('%Y-%m-%d %H:%M:%S')} ---\n")
+            f.write(query.strip() + "\n")
+    except Exception as log_err:
+        logger.error("Failed to write query to log file: %s", log_err)
+
     logger.debug("Executing query: %.300s", query)
-    results = _run_select(query)
+    try:
+        results = _run_select(query)
+    except Exception as exc:
+        logger.error("SQL execution failed: %s", exc)
+        return f"Database error: {exc}"
     logger.info("Query returned %d rows.", len(results))
 
     # Cache the full, untruncated result list if an export_cache_key is provided

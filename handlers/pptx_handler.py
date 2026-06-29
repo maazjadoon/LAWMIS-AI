@@ -184,9 +184,11 @@ def handle_pptx(agent: Any, chat_input: str) -> str:
         try:
             kpi = _fetch_kpi_data()
             path = generate_pptx(kpi)
+            filename = Path(path).name
             return (
                 f"✅ KPI PowerPoint presentation generated successfully!\n\n"
-                f"📂 Saved to: {path}\n\n"
+                f"📂 Saved to: {path}\n"
+                f"🔗 Download Link: http://localhost:8000/exports/{filename}\n\n"
                 f"The presentation contains 8 slides covering Workshops, Licenses, "
                 f"Payments, Emission Tests, Inspections, Top Cities, and Monthly Trends."
             )
@@ -221,12 +223,14 @@ def handle_pptx(agent: Any, chat_input: str) -> str:
 
         headers, rows = normalize_data_for_export(records)
         path = generate_tabular_pptx(headers, rows, title)
+        filename = Path(path).name
         
         row_count = len(rows)
         disp_count = min(row_count, 50)
         return (
             f"✅ Custom PowerPoint presentation generated successfully!\n\n"
-            f"📂 Saved to: {path}\n\n"
+            f"📂 Saved to: {path}\n"
+            f"🔗 Download Link: http://localhost:8000/exports/{filename}\n\n"
             f"The presentation contains slides displaying {disp_count} out of {row_count} matching records."
         )
     except Exception as exc:

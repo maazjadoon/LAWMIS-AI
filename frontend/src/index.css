@@ -6,7 +6,7 @@
 
 @layer base {
   body {
-    @apply bg-canvas text-zinc-100 antialiased font-sans select-none overflow-hidden;
+    @apply bg-canvas text-zinc-100 antialiased font-sans overflow-hidden;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   }
 }

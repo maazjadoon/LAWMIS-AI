@@ -291,14 +291,25 @@ def generate_tabular_pdf(headers: list[str], rows: list[list[str]], title: str) 
     filename = f"kpi_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
     output_path = exports_dir / filename
 
+    col_count = len(headers)
+    
+    # Dynamically set page size and orientation: Portrait for <=8 columns, Landscape for >8 columns
+    if col_count > 8:
+        from reportlab.lib.pagesizes import landscape
+        page_size = landscape(A4)
+        page_w, page_h = page_size
+    else:
+        page_size = A4
+        page_w, page_h = PAGE_W, PAGE_H
+
     doc = BaseDocTemplate(
         str(output_path),
-        pagesize=A4,
+        pagesize=page_size,
         leftMargin=MARGIN, rightMargin=MARGIN,
         topMargin=MARGIN,  bottomMargin=MARGIN,
     )
 
-    frame = Frame(MARGIN, MARGIN, PAGE_W - 2 * MARGIN, PAGE_H - 2 * MARGIN)
+    frame = Frame(MARGIN, MARGIN, page_w - 2 * MARGIN, page_h - 2 * MARGIN)
     doc.addPageTemplates([PageTemplate(id="main", frames=[frame])])
 
     styles = _styles()
@@ -317,7 +328,7 @@ def generate_tabular_pdf(headers: list[str], rows: list[list[str]], title: str) 
 
     # Header title banner
     banner_data = [[f"LAWMIS Data Export: {title}"]]
-    banner_table = Table(banner_data, colWidths=[PAGE_W - 2 * MARGIN])
+    banner_table = Table(banner_data, colWidths=[page_w - 2 * MARGIN])
     banner_table.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, -1), NAVY),
         ("TEXTCOLOR",  (0, 0), (-1, -1), WHITE),
@@ -341,8 +352,7 @@ def generate_tabular_pdf(headers: list[str], rows: list[list[str]], title: str) 
     for row in rows:
         table_data.append([Paragraph(str(cell), cell_style) for cell in row])
 
-    col_count = len(headers)
-    col_width = (PAGE_W - 2 * MARGIN) / col_count
+    col_width = (page_w - 2 * MARGIN) / col_count
 
     t = Table(table_data, colWidths=[col_width] * col_count, repeatRows=1)
     t.setStyle(TableStyle([

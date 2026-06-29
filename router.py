@@ -139,7 +139,15 @@ def detect_intent(text: str) -> str:
     """
     lower_text = text.lower()
 
+    # Query guard: If the user explicitly asks to list, show, find, or search individual database 
+    # rows, bypass the KPI dashboard router so they go to the Query fallback instead.
+    is_list_query = any(verb in lower_text for verb in ["list ", "show ", "find ", "search ", "get ", "audit "]) and \
+                    any(noun in lower_text for noun in [" workshop", " license", " payment", " test", " inspection", " profile"])
+
     for intent_label, keywords in _INTENT_RULES:
+        if intent_label == "kpi" and is_list_query:
+            continue
+
         for kw in keywords:
             # Use word-boundary-aware search for single words; substring for
             # multi-word phrases (e.g. "append to sheet").
