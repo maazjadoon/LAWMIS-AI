@@ -1,0 +1,381 @@
+{
+  "name": "LAWMIS Assistant — Full Workflow v3",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "options": {
+          "title": "LAWMIS Assistant",
+          "subtitle": "Ask about workshops, licenses, payments, KPIs, export to Sheets, PDF/PPTX reports, or query uploaded documents.",
+          "responseMode": "lastNode"
+        }
+      },
+      "id": "3fec4842-314d-44ad-a588-6afb643bda9f",
+      "name": "Chat Trigger",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [-1200, 640],
+      "webhookId": "72036705-e990-464e-b859-adcf8817d106"
+    },
+    {
+      "parameters": {
+        "jsCode": "const MAX_LEN = 4000;\nconst sanitizedItems = items.map((item) => {\n  const rawMessage = item.json.chatInput ?? item.json.message ?? '';\n  let cleanMessage = String(rawMessage).trim().replace(/\\s+/g, ' ');\n  if (cleanMessage.length > MAX_LEN) cleanMessage = cleanMessage.slice(0, MAX_LEN);\n  const sessionId = item.json.sessionId ?? $execution.id;\n  console.log(`[${new Date().toISOString()}] session=${sessionId} len=${cleanMessage.length}`);\n  return { json: { ...item.json, chatInput: cleanMessage, originalMessage: rawMessage, sessionId, isEmpty: cleanMessage.length === 0 } };\n});\nreturn sanitizedItems;"
+      },
+      "id": "cda3f3ff-ee3e-4d77-a183-812e8f2b6474",
+      "name": "Input Sanitizer & Logger",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-992, 640]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "loose", "version": 2 },
+          "conditions": [{ "id": "empty-check-001", "leftValue": "={{ $json.isEmpty }}", "rightValue": true, "operator": { "type": "boolean", "operation": "true", "singleValue": true } }],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "id": "7445e8bc-8c56-4343-b29a-e0a5085693fa",
+      "name": "Empty Input?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-784, 640]
+    },
+    {
+      "parameters": { "jsCode": "return [{ json: { reply: \"I didn't catch a message — could you type your question again? Examples: \\\"show active workshops in Lahore\\\", \\\"export to sheet\\\", \\\"generate PDF report\\\", \\\"show KPI dashboard\\\".\" } }];" },
+      "id": "f4063568-fea2-4bc1-b408-718633c78a39",
+      "name": "Empty Input Reply",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-576, 480]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            { "conditions": { "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict", "version": 2 }, "conditions": [ { "id": "exp-01", "leftValue": "={{ $json.chatInput }}", "rightValue": "export", "operator": { "type": "string", "operation": "contains" } }, { "id": "exp-02", "leftValue": "={{ $json.chatInput }}", "rightValue": "append to sheet", "operator": { "type": "string", "operation": "contains" } }, { "id": "exp-03", "leftValue": "={{ $json.chatInput }}", "rightValue": "google sheet", "operator": { "type": "string", "operation": "contains" } }, { "id": "exp-04", "leftValue": "={{ $json.chatInput }}", "rightValue": "save to sheet", "operator": { "type": "string", "operation": "contains" } } ], "combinator": "or" }, "renameOutput": true, "outputKey": "export" },
+            { "conditions": { "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict", "version": 2 }, "conditions": [ { "id": "upd-01", "leftValue": "={{ $json.chatInput }}", "rightValue": "update", "operator": { "type": "string", "operation": "contains" } }, { "id": "upd-02", "leftValue": "={{ $json.chatInput }}", "rightValue": "delete", "operator": { "type": "string", "operation": "contains" } }, { "id": "upd-03", "leftValue": "={{ $json.chatInput }}", "rightValue": "remove", "operator": { "type": "string", "operation": "contains" } }, { "id": "upd-04", "leftValue": "={{ $json.chatInput }}", "rightValue": "insert", "operator": { "type": "string", "operation": "contains" } } ], "combinator": "or" }, "renameOutput": true, "outputKey": "update_delete" },
+            { "conditions": { "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict", "version": 2 }, "conditions": [ { "id": "kpi-01", "leftValue": "={{ $json.chatInput }}", "rightValue": "dashboard", "operator": { "type": "string", "operation": "contains" } }, { "id": "kpi-02", "leftValue": "={{ $json.chatInput }}", "rightValue": "kpi", "operator": { "type": "string", "operation": "contains" } }, { "id": "kpi-03", "leftValue": "={{ $json.chatInput }}", "rightValue": "statistics", "operator": { "type": "string", "operation": "contains" } }, { "id": "kpi-04", "leftValue": "={{ $json.chatInput }}", "rightValue": "overview", "operator": { "type": "string", "operation": "contains" } }, { "id": "kpi-05", "leftValue": "={{ $json.chatInput }}", "rightValue": "analytics", "operator": { "type": "string", "operation": "contains" } }, { "id": "kpi-06", "leftValue": "={{ $json.chatInput }}", "rightValue": "summary", "operator": { "type": "string", "operation": "contains" } }, { "id": "kpi-07", "leftValue": "={{ $json.chatInput }}", "rightValue": "revenue", "operator": { "type": "string", "operation": "contains" } }, { "id": "kpi-08", "leftValue": "={{ $json.chatInput }}", "rightValue": "pass rate", "operator": { "type": "string", "operation": "contains" } }, { "id": "kpi-09", "leftValue": "={{ $json.chatInput }}", "rightValue": "failure rate", "operator": { "type": "string", "operation": "contains" } }, { "id": "kpi-10", "leftValue": "={{ $json.chatInput }}", "rightValue": "monthly", "operator": { "type": "string", "operation": "contains" } }, { "id": "kpi-11", "leftValue": "={{ $json.chatInput }}", "rightValue": "performance report", "operator": { "type": "string", "operation": "contains" } }, { "id": "kpi-12", "leftValue": "={{ $json.chatInput }}", "rightValue": "total workshops", "operator": { "type": "string", "operation": "contains" } }, { "id": "kpi-13", "leftValue": "={{ $json.chatInput }}", "rightValue": "expired licenses", "operator": { "type": "string", "operation": "contains" } }, { "id": "kpi-14", "leftValue": "={{ $json.chatInput }}", "rightValue": "growth trend", "operator": { "type": "string", "operation": "contains" } }, { "id": "kpi-15", "leftValue": "={{ $json.chatInput }}", "rightValue": "average inspection", "operator": { "type": "string", "operation": "contains" } } ], "combinator": "or" }, "renameOutput": true, "outputKey": "kpi" },
+            { "conditions": { "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict", "version": 2 }, "conditions": [ { "id": "pdf-01", "leftValue": "={{ $json.chatInput }}", "rightValue": "pdf", "operator": { "type": "string", "operation": "contains" } }, { "id": "pdf-02", "leftValue": "={{ $json.chatInput }}", "rightValue": "generate report", "operator": { "type": "string", "operation": "contains" } }, { "id": "pdf-03", "leftValue": "={{ $json.chatInput }}", "rightValue": "create report", "operator": { "type": "string", "operation": "contains" } } ], "combinator": "or" }, "renameOutput": true, "outputKey": "pdf" },
+            { "conditions": { "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict", "version": 2 }, "conditions": [ { "id": "pptx-01", "leftValue": "={{ $json.chatInput }}", "rightValue": "pptx", "operator": { "type": "string", "operation": "contains" } }, { "id": "pptx-02", "leftValue": "={{ $json.chatInput }}", "rightValue": "powerpoint", "operator": { "type": "string", "operation": "contains" } }, { "id": "pptx-03", "leftValue": "={{ $json.chatInput }}", "rightValue": "slides", "operator": { "type": "string", "operation": "contains" } }, { "id": "pptx-04", "leftValue": "={{ $json.chatInput }}", "rightValue": "presentation", "operator": { "type": "string", "operation": "contains" } } ], "combinator": "or" }, "renameOutput": true, "outputKey": "pptx" }
+          ]
+        },
+        "options": { "fallbackOutput": "extra", "renameFallbackOutput": "query" }
+      },
+      "id": "f940dbe5-46aa-44e0-a2c9-bfe587edd667",
+      "name": "Intent Router",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [-560, 736]
+    },
+    { "parameters": { "jsCode": "return [{ json: { reply: \"I'm set up for read-only queries, KPI dashboards, Sheets exports, PDF/PPTX reports. Update/delete operations are disabled. Use the LAWMIS admin panel to modify data.\" } }];" }, "id": "f343c2b2-8a03-4d0f-bf66-f4bda8e5776e", "name": "Unsupported Action", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [-400, 1600] },
+    { "parameters": {}, "id": "8f6539f3-134c-45ce-b6ab-059dae4f64df", "name": "Export Branch", "type": "n8n-nodes-base.noOp", "typeVersion": 1, "position": [-352, 96] },
+    { "parameters": {}, "id": "dbdc86de-c310-4d65-b316-b48fba455c8b", "name": "Query Branch", "type": "n8n-nodes-base.noOp", "typeVersion": 1, "position": [-288, 832] },
+    { "parameters": {}, "id": "ab2d6e49-39b7-4951-b954-5bb354bd803d", "name": "KPI Branch", "type": "n8n-nodes-base.noOp", "typeVersion": 1, "position": [-352, 1168] },
+    { "parameters": {}, "id": "pdf-branch-noop-0001", "name": "PDF Branch", "type": "n8n-nodes-base.noOp", "typeVersion": 1, "position": [-224, 1680] },
+    { "parameters": {}, "id": "pptx-branch-noop-0001", "name": "PPTX Branch", "type": "n8n-nodes-base.noOp", "typeVersion": 1, "position": [-224, 1840] },
+
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=User request: {{ $json.chatInput }}",
+        "options": {
+          "systemMessage": "CRITICAL OUTPUT REQUIREMENTS\nYour final answer MUST be a raw JSON array. Example: [{\"workshop_id\":1,\"workshop_name\":\"ABC Workshop\"}]\nSTRICTLY FORBIDDEN: Explanations, summaries, markdown, code blocks, ```json fences, CSV, any text before or after JSON.\nIf data exists: Return JSON array only. If no rows: Return []\n\nFAST-TRACK EXPORT RULE: If you successfully call execute_query, output the JSON array from the tool result directly.\n\nSCHEMA SAFETY: ONLY use tables/columns from get_schema. NEVER reference workshop_stats, revenue_summary, kpi_view, or any view.\n\nENUM CASING RULE (use exact Title Case):\n- workshop_status/license_status/profile_status: 'Pending','Under Review','Approved','Rejected','Suspended','Expired'\n- payment_status: 'Pending','Paid','Failed','Refunded'\n- test_result: 'Pass','Fail','Conditional Pass'\n- fuel_type: 'Petrol','Diesel','CNG','Hybrid','Electric'\n- transmission: 'Manual','Automatic','CVT','AMT'\n\nENUM NO-CAST RULE: NEVER use ::text or ::varchar on enum columns.\nCORRECT: WHERE payment_status = 'Failed'\nWRONG:   WHERE payment_status = 'Failed'::text\n\nSELECT DISTINCT ORDER BY RULE: When using SELECT DISTINCT, every ORDER BY column must appear in the SELECT list.\n\nSteps: 1) get_schema 2) verify all columns 3) write SELECT-only query 4) return raw JSON array.",
+          "maxIterations": 5,
+          "returnIntermediateSteps": false
+        }
+      },
+      "id": "cb9ffebc-18c7-4e48-bfbf-5730dbd99bc2",
+      "name": "AI Agent - Export",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [-16, 96],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=User request: {{ $json.chatInput }}",
+        "options": {
+          "systemMessage": "You are a helpful data analyst for the LAWMIS workshop licensing system.\n\nSCHEMA (public schema — ONLY these columns):\npublic.workshops: workshop_id, profile_id, workshop_name, workshop_code, workshop_owner_name, workshop_email, workshop_phone, plot_no, street_address, area_locality, city, tehsil, district, province, postal_code, latitude, longitude, area_type, total_area_sqft, workshop_type, number_of_bays, application_date, submitted_at, approved_at, workshop_status, created_at, updated_at\n  NOTE: NO \"location\" column — use city/district/province/area_locality.\npublic.workshop_licenses: license_id, workshop_id, inspection_id, payment_id, license_number, license_category, issue_date, valid_from, valid_until, issued_by_officer, issuing_authority, license_status, renewal_count, last_renewal_date, created_at\npublic.payments: payment_id, workshop_id, profile_id, psid_number, fee_head, fee_amount, currency, payment_mode, bank_name, transaction_ref, challan_no, payment_date, payment_time, payment_status, payment_verified_at, verified_by, remarks, created_at\npublic.applicant_profiles: profile_id, user_id, full_name, father_name, gender, date_of_birth, cnic_number, ntn_number, phone_primary, phone_secondary, email_personal, house_no, street_name, area_locality, city, tehsil, district, province, postal_code, profile_submitted_at, profile_reviewed_at, profile_approved_at, profile_status, review_remarks, reviewed_by_officer, created_at, updated_at\npublic.emission_tests: test_id, workshop_id, vehicle_id, license_id, test_date, test_time, test_datetime, technician_name, equipment_serial, co_pct, co2_pct, co_co2_pct, hc_ppm, nox_ppm, o2_pct, lambda, engine_rpm, oil_temp_c, co_limit_pct, hc_limit_ppm, nox_limit_ppm, test_result, certificate_no, certificate_valid_until, remarks, created_at\npublic.rta_inspections: inspection_id, workshop_id, inspection_date, inspection_time, inspecting_officer, officer_designation, visit_number, score_equipment, score_infrastructure, score_safety, score_staff_competency, score_record_keeping, total_score, inspection_result, remarks, follow_up_required, follow_up_date, created_at\npublic.vehicles: vehicle_id, registration_no, chassis_no, engine_no, make, model, variant, model_year, color, fuel_type, engine_cc, transmission, seating_capacity, gross_weight_kg, owner_name, owner_cnic, owner_phone, registered_at\npublic.workshop_documents: doc_id, workshop_id, profile_id, doc_type, doc_filename, doc_path, uploaded_at, verified, verified_at, verified_by\npublic.sys_users: user_id, username, email, password_hash, role, is_active, created_at, last_login_at\npublic.activity_log: log_id, user_id, workshop_id, profile_id, action, entity_type, entity_id, old_status, new_status, performed_by, ip_address, notes, logged_at\n\nFOREIGN KEYS: workshops.profile_id->applicant_profiles | workshop_licenses.workshop_id->workshops | payments.workshop_id->workshops | emission_tests.workshop_id->workshops | emission_tests.vehicle_id->vehicles | emission_tests.license_id->workshop_licenses | rta_inspections.workshop_id->workshops\n\nCRITICAL RULES:\n1. ONLY use columns above. Use get_schema if unsure.\n2. ENUM CASING: 'Pending','Under Review','Approved','Rejected','Suspended','Expired' | 'Paid','Failed','Refunded' | 'Pass','Fail','Conditional Pass' | 'Petrol','Diesel','CNG','Hybrid','Electric' | 'Manual','Automatic','CVT','AMT'\n3. ENUM NO-CAST: NEVER use ::text on enum columns. CORRECT: WHERE payment_status='Failed' WRONG: WHERE payment_status='Failed'::text\n4. SELECT DISTINCT ORDER BY: Every ORDER BY column must appear in SELECT list when using DISTINCT.\n5. For LATEST license/payment per workshop, use correlated subquery — not plain LEFT JOIN.\n6. Only SELECT. Never INSERT/UPDATE/DELETE/DROP/ALTER/TRUNCATE.\n7. LIMIT 200 by default.\n8. After data, give concise friendly summary. ≤5 rows → markdown table. >5 → summarize.\n9. Query fails with schema error → call get_schema, retry. Never give up.",
+          "maxIterations": 8,
+          "returnIntermediateSteps": false
+        }
+      },
+      "id": "d9c57615-c22b-4ece-8285-7d76fb439241",
+      "name": "AI Agent - Query",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [-16, 848],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=User request: {{ $json.chatInput }}",
+        "options": {
+          "systemMessage": "You are the LAWMIS Analytics & KPI Assistant.\n\nSCHEMA: workshops, workshop_licenses, payments, emission_tests, rta_inspections, vehicles (same columns as Query agent).\n\nSQL RULES:\n- Only SELECT. Never INSERT/UPDATE/DELETE/DROP/ALTER/CREATE.\n- ENUM NO-CAST: NEVER ::text on enum columns. WHERE workshop_status='Approved' NOT 'Approved'::text\n- SELECT DISTINCT ORDER BY: every ORDER BY column must appear in SELECT list.\n- NEVER reference workshop_stats, revenue_summary, kpi_view, or any view — they do not exist.\n- Combine multiple KPIs into one query where possible.\n\nKPI BEHAVIOR: When user asks for Dashboard/Overview/Summary/KPI/Statistics:\nInclude: Total Workshops (Approved/Pending/Rejected), Total Licenses (Active/Expired/Expiring 30 days), Total Revenue, Revenue This Month, Paid Payments, Total Emission Tests, Tests Today, Pass Rate, Failure Rate, Average Inspection Score, Top 5 Cities by workshop count, Monthly Registrations (6 months), Monthly Tests (6 months).\n\nRESPONSE FORMAT — clean emoji dashboard:\n\n📊 LAWMIS Dashboard\n🏭 Workshops\n• Total: 100 • Approved: 85 • Pending: 10 • Rejected: 5\n📄 Licenses\n• Active: 80 • Expired: 12 • Expiring in 30 days: 8\n💰 Payments\n• Revenue: PKR 18,450,000 • This Month: PKR 1,240,000\n🚗 Emission Tests\n• Total: 726 • Pass Rate: 94% • Failure Rate: 6%\n⭐ Inspections\n• Total: 150 • Average Score: 88.5\n\nNever return SQL. Never fabricate numbers. Only actual DB results.",
+          "maxIterations": 8,
+          "returnIntermediateSteps": false
+        }
+      },
+      "id": "a7395289-dbac-4401-8a92-053ea20e0905",
+      "name": "AI Agent - KPI",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [-16, 1232],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=User request: {{ $json.chatInput }}",
+        "options": {
+          "systemMessage": "You are the LAWMIS PDF Report Generator.\n\nQuery the LAWMIS PostgreSQL database and return a raw JSON object (no markdown, no explanations):\n{\n  \"report_title\": \"string\",\n  \"generated_at\": \"ISO timestamp\",\n  \"sections\": [{ \"heading\": \"string\", \"rows\": [{\"col\": \"val\"}] }],\n  \"summary\": \"2-3 sentence executive summary\"\n}\n\nSCHEMA RULES:\n- Only use tables/columns from get_schema.\n- Only SELECT. LIMIT 100 per section.\n- ENUM NO-CAST: NEVER ::text on enum columns.\n- SELECT DISTINCT ORDER BY: every ORDER BY column must appear in SELECT.\n- NEVER reference workshop_stats or any non-existent view.\n\nCRITICAL OUTPUT: Return ONLY valid JSON. No ```json. No text before/after.",
+          "maxIterations": 5,
+          "returnIntermediateSteps": false
+        }
+      },
+      "id": "ai-agent-pdf-0001",
+      "name": "AI Agent - PDF",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [48, 1680],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=User request: {{ $json.chatInput }}",
+        "options": {
+          "systemMessage": "You are the LAWMIS PowerPoint Report Generator.\n\nQuery the LAWMIS PostgreSQL database and return a raw JSON object:\n{\n  \"presentation_title\": \"string\",\n  \"generated_at\": \"ISO timestamp\",\n  \"slides\": [{\n    \"slide_title\": \"string\",\n    \"slide_type\": \"title|kpi_grid|table|chart_data|summary\",\n    \"content\": { \"subtitle\": \"...\", \"kpis\": [{\"label\":\"...\",\"value\":\"...\"}], \"headers\": [\"col1\"], \"rows\": [[\"val1\"]], \"chart_labels\": [\"L\"], \"chart_values\": [0], \"text\": \"...\" }\n  }]\n}\n\nSCHEMA RULES:\n- Only use tables/columns from get_schema.\n- Only SELECT. Limit 10 rows per table slide; aggregate for KPI slides.\n- ENUM NO-CAST: NEVER ::text on enum columns.\n- SELECT DISTINCT ORDER BY: every ORDER BY column must appear in SELECT.\n- NEVER reference workshop_stats or any non-existent view.\n\nCRITICAL OUTPUT: Return ONLY valid JSON. No ```json. No text before/after.",
+          "maxIterations": 5,
+          "returnIntermediateSteps": false
+        }
+      },
+      "id": "ai-agent-pptx-0001",
+      "name": "AI Agent - PPTX",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [48, 1840],
+      "onError": "continueErrorOutput"
+    },
+
+    { "parameters": { "model": "mistral-small-latest", "options": { "temperature": 0 } }, "id": "e58ed916-b76c-4af1-8818-1a66600cbcb6", "name": "Mistral Model - Export", "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud", "typeVersion": 1, "position": [-80, 320], "credentials": { "mistralCloudApi": { "id": "H56oOaunCxtDk3YQ", "name": "Mistral Cloud account" } } },
+    { "parameters": { "model": "mistral-large-latest", "options": { "temperature": 0.1 } }, "id": "855940ac-a610-4c52-b347-7857e5de7956", "name": "Mistral Model - Query", "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud", "typeVersion": 1, "position": [-32, 944], "credentials": { "mistralCloudApi": { "id": "H56oOaunCxtDk3YQ", "name": "Mistral Cloud account" } } },
+    { "parameters": { "model": "mistral-large-latest", "options": { "temperature": 0.1 } }, "id": "dc4ef78b-5cab-448f-9b23-e6f8d58b5688", "name": "Mistral Model - KPI", "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud", "typeVersion": 1, "position": [-224, 1280], "credentials": { "mistralCloudApi": { "id": "H56oOaunCxtDk3YQ", "name": "Mistral Cloud account" } } },
+    { "parameters": { "model": "mistral-large-latest", "options": { "temperature": 0 } }, "id": "mistral-pdf-0001", "name": "Mistral Model - PDF", "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud", "typeVersion": 1, "position": [-160, 1808], "credentials": { "mistralCloudApi": { "id": "H56oOaunCxtDk3YQ", "name": "Mistral Cloud account" } } },
+    { "parameters": { "model": "mistral-large-latest", "options": { "temperature": 0 } }, "id": "mistral-pptx-0001", "name": "Mistral Model - PPTX", "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud", "typeVersion": 1, "position": [-160, 1968], "credentials": { "mistralCloudApi": { "id": "H56oOaunCxtDk3YQ", "name": "Mistral Cloud account" } } },
+
+    { "parameters": { "sessionIdType": "customKey", "sessionKey": "={{ $json.sessionId }}", "contextWindowLength": 8 }, "id": "cdd2bdfa-1000-4911-9826-312d0ab97382", "name": "Buffer Memory - Export", "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow", "typeVersion": 1.3, "position": [128, 336] },
+    { "parameters": { "sessionIdType": "customKey", "sessionKey": "={{ $json.sessionId }}", "contextWindowLength": 8 }, "id": "8521effd-b51e-480a-8a94-b341a69548f2", "name": "Buffer Memory - Query", "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow", "typeVersion": 1.3, "position": [112, 944] },
+    { "parameters": { "sessionIdType": "customKey", "sessionKey": "={{ $json.sessionId }}", "contextWindowLength": 6 }, "id": "4c789001-e66b-4f1d-bdf6-c61d0f11ccaf", "name": "Buffer Memory - KPI", "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow", "typeVersion": 1.3, "position": [-32, 1344] },
+    { "parameters": { "sessionIdType": "customKey", "sessionKey": "={{ $json.sessionId }}", "contextWindowLength": 6 }, "id": "buffer-mem-pdf-0001", "name": "Buffer Memory - PDF", "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow", "typeVersion": 1.3, "position": [0, 1872] },
+    { "parameters": { "sessionIdType": "customKey", "sessionKey": "={{ $json.sessionId }}", "contextWindowLength": 6 }, "id": "buffer-mem-pptx-0001", "name": "Buffer Memory - PPTX", "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow", "typeVersion": 1.3, "position": [0, 2032] },
+
+    { "parameters": { "descriptionType": "manual", "toolDescription": "Execute a read-only PostgreSQL SELECT query against the LAWMIS database. Input: single valid SELECT statement targeting public schema. Never pass INSERT/UPDATE/DELETE/DDL.", "operation": "executeQuery", "query": "={{ $fromAI('query', 'A single read-only SQL SELECT statement against the public schema', 'string') }}", "options": {} }, "id": "bfe3dec4-1a58-40a1-98f2-d33afb49c3ec", "name": "PostgreSQL Tool - Export", "type": "n8n-nodes-base.postgresTool", "typeVersion": 2.6, "position": [256, 384], "retryOnFail": true, "maxTries": 2, "waitBetweenTries": 1000, "credentials": { "postgres": { "id": "0vALtBpFCz1sLtVj", "name": "Postgres account" } } },
+    { "parameters": { "descriptionType": "manual", "toolDescription": "Look up real column names and data types for tables in the public schema. Pass a table name, comma-separated list, or 'all'.", "operation": "executeQuery", "query": "={{ $fromAI('table_name', \"A table name, comma-separated list, or 'all'\", 'string').toLowerCase().trim() === 'all' ? \"SELECT table_name, column_name, data_type FROM information_schema.columns WHERE table_schema = 'public' ORDER BY table_name, ordinal_position;\" : \"SELECT table_name, column_name, data_type FROM information_schema.columns WHERE table_schema = 'public' AND table_name = ANY(string_to_array('\" + $fromAI('table_name', \"A table name, comma-separated list, or 'all'\", 'string').toLowerCase().replace(/[^a-z0-9_, ]/g, '').split(',').map((s) => s.trim()).filter(Boolean).join(',') + \"', ',')) ORDER BY table_name, ordinal_position;\" }}", "options": {} }, "id": "8a2446e0-6100-411d-8ab8-f0147d47ee80", "name": "get_schema - Export", "type": "n8n-nodes-base.postgresTool", "typeVersion": 2.6, "position": [400, 336], "retryOnFail": true, "maxTries": 2, "waitBetweenTries": 1000, "credentials": { "postgres": { "id": "0vALtBpFCz1sLtVj", "name": "Postgres account" } } },
+    { "parameters": { "descriptionType": "manual", "toolDescription": "Execute a read-only PostgreSQL SELECT query for LAWMIS data analysis.", "operation": "executeQuery", "query": "={{ $fromAI('query', 'A single read-only SQL SELECT statement against the public schema', 'string') }}", "options": {} }, "id": "1eefebae-baae-4678-97be-5397ed85d3c1", "name": "PostgreSQL Tool - Query", "type": "n8n-nodes-base.postgresTool", "typeVersion": 2.6, "position": [224, 960], "retryOnFail": true, "maxTries": 2, "waitBetweenTries": 1000, "credentials": { "postgres": { "id": "0vALtBpFCz1sLtVj", "name": "Postgres account" } } },
+    { "parameters": { "descriptionType": "manual", "toolDescription": "Look up real column names and data types for tables in the public schema. Pass a table name, comma-separated list, or 'all'.", "operation": "executeQuery", "query": "={{ $fromAI('table_name', \"A table name, comma-separated list, or 'all'\", 'string').toLowerCase().trim() === 'all' ? \"SELECT table_name, column_name, data_type FROM information_schema.columns WHERE table_schema = 'public' ORDER BY table_name, ordinal_position;\" : \"SELECT table_name, column_name, data_type FROM information_schema.columns WHERE table_schema = 'public' AND table_name = ANY(string_to_array('\" + $fromAI('table_name', \"A table name, comma-separated list, or 'all'\", 'string').toLowerCase().replace(/[^a-z0-9_, ]/g, '').split(',').map((s) => s.trim()).filter(Boolean).join(',') + \"', ',')) ORDER BY table_name, ordinal_position;\" }}", "options": {} }, "id": "0a568ff4-408b-44bd-974d-6bacd7a111b3", "name": "get_schema - Query", "type": "n8n-nodes-base.postgresTool", "typeVersion": 2.6, "position": [336, 944], "retryOnFail": true, "maxTries": 2, "waitBetweenTries": 1000, "credentials": { "postgres": { "id": "0vALtBpFCz1sLtVj", "name": "Postgres account" } } },
+    { "parameters": { "descriptionType": "manual", "toolDescription": "Execute a read-only PostgreSQL SELECT query for KPI/analytics data.", "operation": "executeQuery", "query": "={{ $fromAI('query', 'A single read-only SQL SELECT statement for KPI/analytics', 'string') }}", "options": {} }, "id": "66f26a51-5e50-4fc2-b890-7e1ade8b87ca", "name": "PostgreSQL Tool - KPI", "type": "n8n-nodes-base.postgresTool", "typeVersion": 2.6, "position": [80, 1392], "retryOnFail": true, "maxTries": 2, "waitBetweenTries": 1000, "credentials": { "postgres": { "id": "0vALtBpFCz1sLtVj", "name": "Postgres account" } } },
+    { "parameters": { "descriptionType": "manual", "toolDescription": "Look up real column names and data types for tables in the public schema.", "operation": "executeQuery", "query": "={{ $fromAI('table_name', \"A table name, comma-separated list, or 'all'\", 'string').toLowerCase().trim() === 'all' ? \"SELECT table_name, column_name, data_type FROM information_schema.columns WHERE table_schema = 'public' ORDER BY table_name, ordinal_position;\" : \"SELECT table_name, column_name, data_type FROM information_schema.columns WHERE table_schema = 'public' AND table_name = ANY(string_to_array('\" + $fromAI('table_name', \"A table name, comma-separated list, or 'all'\", 'string').toLowerCase().replace(/[^a-z0-9_, ]/g, '').split(',').map((s) => s.trim()).filter(Boolean).join(',') + \"', ',')) ORDER BY table_name, ordinal_position;\" }}", "options": {} }, "id": "0c60abf1-a5d5-4794-977a-4b135131c306", "name": "get_schema - KPI", "type": "n8n-nodes-base.postgresTool", "typeVersion": 2.6, "position": [304, 1264], "credentials": { "postgres": { "id": "0vALtBpFCz1sLtVj", "name": "Postgres account" } } },
+    { "parameters": { "descriptionType": "manual", "toolDescription": "Execute a read-only PostgreSQL SELECT query for PDF report generation.", "operation": "executeQuery", "query": "={{ $fromAI('query', 'A single read-only SQL SELECT statement against the public schema', 'string') }}", "options": {} }, "id": "pg-tool-pdf-0001", "name": "PostgreSQL Tool - PDF", "type": "n8n-nodes-base.postgresTool", "typeVersion": 2.6, "position": [128, 1872], "retryOnFail": true, "maxTries": 2, "waitBetweenTries": 1000, "credentials": { "postgres": { "id": "0vALtBpFCz1sLtVj", "name": "Postgres account" } } },
+    { "parameters": { "descriptionType": "manual", "toolDescription": "Look up real column names and data types. Pass table name or 'all'.", "operation": "executeQuery", "query": "={{ $fromAI('table_name', \"A table name, comma-separated list, or 'all'\", 'string').toLowerCase().trim() === 'all' ? \"SELECT table_name, column_name, data_type FROM information_schema.columns WHERE table_schema = 'public' ORDER BY table_name, ordinal_position;\" : \"SELECT table_name, column_name, data_type FROM information_schema.columns WHERE table_schema = 'public' AND table_name = ANY(string_to_array('\" + $fromAI('table_name', \"A table name, comma-separated list, or 'all'\", 'string').toLowerCase().replace(/[^a-z0-9_, ]/g, '').split(',').map((s) => s.trim()).filter(Boolean).join(',') + \"', ',')) ORDER BY table_name, ordinal_position;\" }}", "options": {} }, "id": "get-schema-pdf-0001", "name": "get_schema - PDF", "type": "n8n-nodes-base.postgresTool", "typeVersion": 2.6, "position": [272, 1872], "credentials": { "postgres": { "id": "0vALtBpFCz1sLtVj", "name": "Postgres account" } } },
+    { "parameters": { "descriptionType": "manual", "toolDescription": "Execute a read-only PostgreSQL SELECT query for PPTX/slide generation.", "operation": "executeQuery", "query": "={{ $fromAI('query', 'A single read-only SQL SELECT statement against the public schema', 'string') }}", "options": {} }, "id": "pg-tool-pptx-0001", "name": "PostgreSQL Tool - PPTX", "type": "n8n-nodes-base.postgresTool", "typeVersion": 2.6, "position": [128, 2032], "retryOnFail": true, "maxTries": 2, "waitBetweenTries": 1000, "credentials": { "postgres": { "id": "0vALtBpFCz1sLtVj", "name": "Postgres account" } } },
+    { "parameters": { "descriptionType": "manual", "toolDescription": "Look up real column names and data types. Pass table name or 'all'.", "operation": "executeQuery", "query": "={{ $fromAI('table_name', \"A table name, comma-separated list, or 'all'\", 'string').toLowerCase().trim() === 'all' ? \"SELECT table_name, column_name, data_type FROM information_schema.columns WHERE table_schema = 'public' ORDER BY table_name, ordinal_position;\" : \"SELECT table_name, column_name, data_type FROM information_schema.columns WHERE table_schema = 'public' AND table_name = ANY(string_to_array('\" + $fromAI('table_name', \"A table name, comma-separated list, or 'all'\", 'string').toLowerCase().replace(/[^a-z0-9_, ]/g, '').split(',').map((s) => s.trim()).filter(Boolean).join(',') + \"', ',')) ORDER BY table_name, ordinal_position;\" }}", "options": {} }, "id": "get-schema-pptx-0001", "name": "get_schema - PPTX", "type": "n8n-nodes-base.postgresTool", "typeVersion": 2.6, "position": [272, 2032], "credentials": { "postgres": { "id": "0vALtBpFCz1sLtVj", "name": "Postgres account" } } },
+
+    {
+      "parameters": {
+        "jsCode": "const count = items.length;\nconst itemsToReturn = [];\nconst keyMap = { workshop_owner_name:'Owner Name',workshop_phone:'Phone',workshop_name:'Workshop Name',workshop_id:'Workshop ID',workshop_code:'Code',workshop_status:'Status',city:'City',district:'District',province:'Province',license_status:'License Status',valid_until:'Valid Until',payment_status:'Payment Status',fee_amount:'Fee Amount',full_name:'Full Name',cnic_number:'CNIC',phone_primary:'Phone',profile_status:'Profile Status',test_result:'Test Result',certificate_no:'Certificate No',test_date:'Test Date',inspection_result:'Inspection Result',total_score:'Total Score',inspection_date:'Inspection Date',created_at:'Created At',workshop_email:'Email' };\nfunction titleCase(key) { return key.replace(/_/g,' ').replace(/\\b\\w/g,(c)=>c.toUpperCase()); }\nfunction extractJson(raw) { if(raw===null||raw===undefined)return[]; if(Array.isArray(raw)||typeof raw==='object')return raw; let s=String(raw).trim(); s=s.replace(/^\\s*```(?:json|javascript|js)?\\s*/i,''); s=s.replace(/\\s*```\\s*$/i,''); s=s.trim(); const candidates=['[','{'].map((c)=>s.indexOf(c)).filter((i)=>i!==-1); if(candidates.length){const start=Math.min(...candidates); if(start>0)s=s.slice(start);} const lastBracket=Math.max(s.lastIndexOf(']'),s.lastIndexOf('}')); if(lastBracket!==-1&&lastBracket<s.length-1)s=s.slice(0,lastBracket+1); return JSON.parse(s); }\nfor(const item of items){const rawOutput=item.json.output??item.json.choices?.[0]?.message?.content??[];let dataArray;try{dataArray=extractJson(rawOutput);}catch(e){const preview=String(rawOutput).substring(0,300);throw new Error(`Export failed: agent did not return parseable JSON. ${e.message}. Raw: ${preview}`);} if(!Array.isArray(dataArray))dataArray=[dataArray]; for(const record of dataArray){if(record===null||typeof record!=='object')continue;const newRecord={};for(const key of Object.keys(record)){const cleanKey=keyMap[key]??titleCase(key);newRecord[cleanKey]=record[key];}itemsToReturn.push({json:newRecord});}}\nif(itemsToReturn.length===0)throw new Error('Export produced zero usable records — nothing to append.');\nreturn itemsToReturn;"
+      },
+      "id": "df70da19-87ce-4e8a-82f5-dff33bba713c",
+      "name": "Split Records & Normalize",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [672, 352],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": { "__rl": true, "value": "1gD7p2PzjlMPhGWuxnfZ_KhmhlsgyFJpcTzD0eMlT25M", "mode": "list", "cachedResultName": "N8N DB EXPORT", "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1gD7p2PzjlMPhGWuxnfZ_KhmhlsgyFJpcTzD0eMlT25M/edit?usp=drivesdk" },
+        "sheetName": { "__rl": true, "value": "gid=0", "mode": "list", "cachedResultName": "details", "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1gD7p2PzjlMPhGWuxnfZ_KhmhlsgyFJpcTzD0eMlT25M/edit#gid=0" },
+        "columns": { "mappingMode": "autoMapInputData", "value": {}, "matchingColumns": [], "schema": [] },
+        "options": { "useAppend": true }
+      },
+      "id": "cbd66ac7-3e20-491d-a465-06f855d00545",
+      "name": "Google Sheets Append",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [816, 432],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": { "googleSheetsOAuth2Api": { "id": "2CoobSIyr34pfOBJ", "name": "Google Sheets account" } },
+      "onError": "continueErrorOutput"
+    },
+    { "parameters": { "jsCode": "const count=items.length;\nreturn [{json:{reply:`✅ Done — ${count} record${count===1?'':'s'} appended to the Google Sheet \"N8N DB EXPORT\" (tab: details).`}}];" }, "id": "f5d14824-235b-48fd-aeda-708d4d705876", "name": "Export Success Reply", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [1056, 368] },
+    { "parameters": { "jsCode": "const err=items[0]?.json?.error??'Unknown error writing to Google Sheets.';\nreturn [{json:{reply:`I fetched the data but couldn't write to the Google Sheet (${typeof err==='string'?err:JSON.stringify(err)}). Check that the sheet is accessible and try again.`}}];" }, "id": "89465d72-4ad6-4484-8f5d-03182e6b1c50", "name": "Sheets Error Reply", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [1056, 528] },
+    { "parameters": { "jsCode": "const err=items[0]?.json?.error??'Unknown error during export.';\nreturn [{json:{reply:`I couldn't complete that export (${typeof err==='string'?err:JSON.stringify(err)}). Try rephrasing or narrowing the request.`}}];" }, "id": "0b0b5e77-8258-42c6-93fb-15138dd7b93d", "name": "Export Error Reply", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [608, 560] },
+    { "parameters": { "jsCode": "const newItems=items.map((item)=>({json:{reply:item.json.output??'Sorry, got an empty response.'}}));\nreturn newItems;" }, "id": "e0e2a1f8-8f8a-4bfc-940e-3c9fccd832ed", "name": "Response Formatter", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [576, 832] },
+    { "parameters": { "jsCode": "const err=items[0]?.json?.error??'Unknown error during query.';\nreturn [{json:{reply:`Sorry, I ran into a problem (${typeof err==='string'?err:JSON.stringify(err)}). Could you try rephrasing?`}}];" }, "id": "1f2a1d73-23a6-4db8-855d-c3281b4c7212", "name": "Query Error Reply", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [448, 944] },
+    { "parameters": { "jsCode": "const newItems=items.map((item)=>({json:{reply:item.json.output?.trim()||'No KPI data could be retrieved. Please try again.'}}));\nreturn newItems;" }, "id": "e5d99a1b-264a-4051-bea9-f80378610750", "name": "KPI Dashboard Formatter", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [448, 1168] },
+    { "parameters": { "jsCode": "const err=items[0]?.json?.error??'Unknown error during KPI fetch.';\nreturn [{json:{reply:`I couldn't load the KPI dashboard (${typeof err==='string'?err:JSON.stringify(err)}). Try: \"show workshop KPIs\" or \"emission test statistics\".`}}];" }, "id": "18e5f285-cd3a-4120-9864-2d9d06ad8c81", "name": "KPI Error Reply", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [448, 1312] },
+
+    {
+      "parameters": {
+        "jsCode": "function extractJson(raw){if(!raw)throw new Error('No output from PDF agent');let s=String(raw).trim().replace(/^```(?:json)?\\s*/i,'').replace(/```\\s*$/,'').trim();const si=s.indexOf('{');if(si>0)s=s.slice(si);const ei=s.lastIndexOf('}');if(ei!==-1&&ei<s.length-1)s=s.slice(0,ei+1);return JSON.parse(s);}\nconst raw=items[0].json.output??'';\nlet report;\ntry{report=extractJson(raw);}catch(e){throw new Error('PDF agent did not return valid JSON: '+e.message);}\nconst ts=report.generated_at?new Date(report.generated_at).toLocaleString():new Date().toLocaleString();\nlet sectionsHtml='';\nfor(const sec of(report.sections||[])){if(!sec.rows||sec.rows.length===0)continue;const headers=Object.keys(sec.rows[0]);const thead=headers.map(h=>`<th>${h}</th>`).join('');const tbody=sec.rows.map(r=>'<tr>'+headers.map(h=>`<td>${r[h]??''}</td>`).join('')+'</tr>').join('');sectionsHtml+=`<div class=\"section\"><h2>${sec.heading||'Data'}</h2><table><thead><tr>${thead}</tr></thead><tbody>${tbody}</tbody></table></div>`;}\nconst html=`<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><style>body{font-family:Arial,sans-serif;margin:32px;color:#1a1a2e}h1{color:#1a1a2e;border-bottom:3px solid #16213e;padding-bottom:8px}h2{color:#16213e;margin-top:28px}.meta{color:#666;font-size:13px;margin-bottom:20px}.summary{background:#f0f4ff;border-left:4px solid #4361ee;padding:12px 16px;margin:16px 0;border-radius:4px}table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px}th{background:#1a1a2e;color:#fff;padding:8px 10px;text-align:left}td{padding:7px 10px;border-bottom:1px solid #e0e0e0}tr:nth-child(even) td{background:#f7f9ff}.section{margin-bottom:32px}.footer{margin-top:40px;font-size:11px;color:#999;text-align:center}</style></head><body><h1>📊 ${report.report_title||'LAWMIS Report'}</h1><p class=\"meta\">Generated: ${ts} &nbsp;|&nbsp; LAWMIS Workshop Information System</p>${report.summary?`<div class=\"summary\"><strong>Executive Summary:</strong> ${report.summary}</div>`:''} ${sectionsHtml}<div class=\"footer\">LAWMIS — Confidential &nbsp;|&nbsp; ${ts}</div></body></html>`;\nreturn [{json:{htmlContent:html,reportTitle:report.report_title||'LAWMIS Report',rowCount:(report.sections||[]).reduce((a,s)=>a+(s.rows||[]).length,0)}}];"
+      },
+      "id": "pdf-builder-code-0001",
+      "name": "PDF HTML Builder",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [400, 1680]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.html2pdf.app/v1/generate",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [{ "name": "Content-Type", "value": "application/json" }] },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"html\": {{ JSON.stringify($json.htmlContent) }},\n  \"apiKey\": \"YOUR_HTML2PDF_API_KEY\"\n}",
+        "options": { "response": { "response": { "responseFormat": "file" } } }
+      },
+      "id": "pdf-http-convert-0001",
+      "name": "Convert HTML to PDF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [608, 1680],
+      "onError": "continueErrorOutput",
+      "notes": "Replace YOUR_HTML2PDF_API_KEY with your actual key, or swap with any HTML-to-PDF service."
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "name": "=LAWMIS_Report_{{ $now.format('yyyy-MM-dd_HH-mm') }}.pdf",
+        "driveId": { "__rl": true, "mode": "list", "value": "My Drive" },
+        "folderId": { "__rl": true, "mode": "list", "value": "root" },
+        "options": { "mimeType": "application/pdf" }
+      },
+      "id": "gdrive-upload-pdf-0001",
+      "name": "Upload PDF to Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [816, 1680],
+      "onError": "continueErrorOutput",
+      "credentials": { "googleDriveOAuth2Api": { "id": "YOUR_GDRIVE_CRED_ID", "name": "Google Drive account" } }
+    },
+    { "parameters": { "jsCode": "const title=$('PDF HTML Builder').first().json.reportTitle||'LAWMIS Report';const rows=$('PDF HTML Builder').first().json.rowCount||0;\nreturn [{json:{reply:`✅ PDF report \"${title}\" generated with ${rows} records and uploaded to your Google Drive.`}}];" }, "id": "pdf-success-reply-0001", "name": "PDF Success Reply", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [1056, 1632] },
+    { "parameters": { "jsCode": "const err=items[0]?.json?.error??'Unknown error during PDF generation.';\nreturn [{json:{reply:`I couldn't generate the PDF report (${typeof err==='string'?err:JSON.stringify(err)}). Try again or narrow your request.`}}];" }, "id": "pdf-error-reply-0001", "name": "PDF Error Reply", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [1056, 1728] },
+    { "parameters": { "jsCode": "const err=items[0]?.json?.error??'Unknown error.';\nreturn [{json:{reply:`PDF agent failed: ${typeof err==='string'?err:JSON.stringify(err)}. Try rephrasing.`}}];" }, "id": "pdf-agent-err-0001", "name": "PDF Agent Error Reply", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [400, 1776] },
+
+    {
+      "parameters": {
+        "jsCode": "function extractJson(raw){if(!raw)throw new Error('No output from PPTX agent');let s=String(raw).trim().replace(/^```(?:json)?\\s*/i,'').replace(/```\\s*$/,'').trim();const si=s.indexOf('{');if(si>0)s=s.slice(si);const ei=s.lastIndexOf('}');if(ei!==-1&&ei<s.length-1)s=s.slice(0,ei+1);return JSON.parse(s);}\nconst raw=items[0].json.output??'';\nlet pres;\ntry{pres=extractJson(raw);}catch(e){throw new Error('PPTX agent did not return valid JSON: '+e.message);}\nconst ts=pres.generated_at?new Date(pres.generated_at).toLocaleString():new Date().toLocaleString();\nconst slides=pres.slides||[];\nlet slidesHtml='';\nfor(const[i,slide]of slides.entries()){const c=slide.content||{};let body='';\nif(slide.slide_type==='title'){body=`<div class=\"title-slide\"><h1>${slide.slide_title}</h1><p class=\"subtitle\">${c.subtitle||''}</p><p class=\"ts\">${ts}</p></div>`;}\nelse if(slide.slide_type==='kpi_grid'){const kpis=(c.kpis||[]).map(k=>`<div class=\"kpi-box\"><div class=\"kpi-val\">${k.value}</div><div class=\"kpi-lbl\">${k.label}</div></div>`).join('');body=`<h2>${slide.slide_title}</h2><div class=\"kpi-grid\">${kpis}</div>`;}\nelse if(slide.slide_type==='table'){const headers=(c.headers||[]).map(h=>`<th>${h}</th>`).join('');const rows=(c.rows||[]).map(r=>'<tr>'+(r||[]).map(v=>`<td>${v??''}</td>`).join('')+'</tr>').join('');body=`<h2>${slide.slide_title}</h2><table><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table>`;}\nelse if(slide.slide_type==='chart_data'){const labels=c.chart_labels||[];const vals=c.chart_values||[];const max=Math.max(...vals,1);const bars=labels.map((l,i)=>`<div class=\"bar-row\"><div class=\"bar-lbl\">${l}</div><div class=\"bar\" style=\"width:${Math.round((vals[i]||0)/max*100)}%\">${vals[i]||0}</div></div>`).join('');body=`<h2>${slide.slide_title}</h2><div class=\"chart\">${bars}</div>`;}\nelse{body=`<h2>${slide.slide_title}</h2><p class=\"summary-text\">${c.text||''}</p>`;}\nslidesHtml+=`<div class=\"slide\"><div class=\"slide-num\">Slide ${i+1}</div>${body}</div>`;}\nconst html=`<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><style>body{font-family:Arial,sans-serif;background:#f0f0f0;margin:0;padding:24px}.slide{background:#fff;width:720px;min-height:405px;margin:0 auto 32px;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.15);padding:36px 48px;box-sizing:border-box;position:relative;page-break-after:always}.slide-num{position:absolute;top:12px;right:20px;font-size:11px;color:#aaa}.title-slide{text-align:center;padding-top:60px}.title-slide h1{font-size:32px;color:#1a1a2e}.subtitle{font-size:18px;color:#555}.ts{font-size:12px;color:#aaa;margin-top:16px}h2{color:#1a1a2e;font-size:20px;border-bottom:2px solid #4361ee;padding-bottom:6px}.kpi-grid{display:flex;flex-wrap:wrap;gap:16px;margin-top:16px}.kpi-box{background:#f0f4ff;border-radius:8px;padding:16px 24px;text-align:center;flex:1;min-width:120px}.kpi-val{font-size:28px;font-weight:700;color:#4361ee}.kpi-lbl{font-size:12px;color:#555;margin-top:4px}table{width:100%;border-collapse:collapse;font-size:13px}th{background:#1a1a2e;color:#fff;padding:8px 10px;text-align:left}td{padding:7px 10px;border-bottom:1px solid #e8e8e8}tr:nth-child(even) td{background:#f7f9ff}.bar-row{display:flex;align-items:center;margin-bottom:8px}.bar-lbl{width:120px;font-size:12px;color:#444;flex-shrink:0}.bar{background:linear-gradient(90deg,#4361ee,#7c83fd);height:24px;border-radius:4px;display:flex;align-items:center;padding:0 8px;color:#fff;font-size:12px;font-weight:700;min-width:32px}.summary-text{font-size:15px;color:#333;line-height:1.7;background:#f7f9ff;padding:20px;border-radius:8px}</style></head><body><h1 style=\"text-align:center;color:#1a1a2e;margin-bottom:24px\">${pres.presentation_title||'LAWMIS Presentation'}</h1>${slidesHtml}</body></html>`;\nreturn [{json:{htmlContent:html,presentationTitle:pres.presentation_title||'LAWMIS Presentation',slideCount:slides.length},binary:{data:{data:Buffer.from(html).toString('base64'),mimeType:'text/html',fileName:'presentation.html'}}}];"
+      },
+      "id": "pptx-builder-code-0001",
+      "name": "PPTX HTML Builder",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [400, 1840]
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "name": "=LAWMIS_Slides_{{ $now.format('yyyy-MM-dd_HH-mm') }}.html",
+        "driveId": { "__rl": true, "mode": "list", "value": "My Drive" },
+        "folderId": { "__rl": true, "mode": "list", "value": "root" },
+        "options": { "mimeType": "text/html" }
+      },
+      "id": "gdrive-upload-pptx-0001",
+      "name": "Upload Slides to Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [608, 1840],
+      "onError": "continueErrorOutput",
+      "credentials": { "googleDriveOAuth2Api": { "id": "YOUR_GDRIVE_CRED_ID", "name": "Google Drive account" } }
+    },
+    { "parameters": { "jsCode": "const title=$('PPTX HTML Builder').first().json.presentationTitle||'LAWMIS Slides';const slides=$('PPTX HTML Builder').first().json.slideCount||0;\nreturn [{json:{reply:`✅ Slide deck \"${title}\" generated with ${slides} slides and uploaded to Google Drive as HTML. Open in any browser or print to PDF.`}}];" }, "id": "pptx-success-reply-0001", "name": "PPTX Success Reply", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [816, 1792] },
+    { "parameters": { "jsCode": "const err=items[0]?.json?.error??'Unknown error during slide generation.';\nreturn [{json:{reply:`I couldn't generate the slide deck (${typeof err==='string'?err:JSON.stringify(err)}). Try again or narrow your request.`}}];" }, "id": "pptx-error-reply-0001", "name": "PPTX Error Reply", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [816, 1904] },
+    { "parameters": { "jsCode": "const err=items[0]?.json?.error??'Unknown error.';\nreturn [{json:{reply:`Slide generation agent failed: ${typeof err==='string'?err:JSON.stringify(err)}. Try rephrasing.`}}];" }, "id": "pptx-agent-err-0001", "name": "PPTX Agent Error Reply", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [400, 1936] },
+
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { reply: $json.reply } }}",
+        "options": { "responseCode": 200 }
+      },
+      "id": "8b6529b0-4a09-4060-8565-c27d8f5bce75",
+      "name": "Final Response to Chat",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [1296, 688]
+    }
+  ],
+  "connections": {
+    "Chat Trigger": { "main": [[{ "node": "Input Sanitizer & Logger", "type": "main", "index": 0 }]] },
+    "Input Sanitizer & Logger": { "main": [[{ "node": "Empty Input?", "type": "main", "index": 0 }]] },
+    "Empty Input?": { "main": [[{ "node": "Empty Input Reply", "type": "main", "index": 0 }], [{ "node": "Intent Router", "type": "main", "index": 0 }]] },
+    "Intent Router": { "main": [[{ "node": "Export Branch", "type": "main", "index": 0 }], [{ "node": "Unsupported Action", "type": "main", "index": 0 }], [{ "node": "KPI Branch", "type": "main", "index": 0 }], [{ "node": "PDF Branch", "type": "main", "index": 0 }], [{ "node": "PPTX Branch", "type": "main", "index": 0 }], [{ "node": "Query Branch", "type": "main", "index": 0 }]] },
+    "Export Branch": { "main": [[{ "node": "AI Agent - Export", "type": "main", "index": 0 }]] },
+    "Query Branch": { "main": [[{ "node": "AI Agent - Query", "type": "main", "index": 0 }]] },
+    "KPI Branch": { "main": [[{ "node": "AI Agent - KPI", "type": "main", "index": 0 }]] },
+    "PDF Branch": { "main": [[{ "node": "AI Agent - PDF", "type": "main", "index": 0 }]] },
+    "PPTX Branch": { "main": [[{ "node": "AI Agent - PPTX", "type": "main", "index": 0 }]] },
+    "AI Agent - Export": { "main": [[{ "node": "Split Records & Normalize", "type": "main", "index": 0 }], [{ "node": "Export Error Reply", "type": "main", "index": 0 }]] },
+    "AI Agent - Query": { "main": [[{ "node": "Response Formatter", "type": "main", "index": 0 }], [{ "node": "Query Error Reply", "type": "main", "index": 0 }]] },
+    "AI Agent - KPI": { "main": [[{ "node": "KPI Dashboard Formatter", "type": "main", "index": 0 }], [{ "node": "KPI Error Reply", "type": "main", "index": 0 }]] },
+    "AI Agent - PDF": { "main": [[{ "node": "PDF HTML Builder", "type": "main", "index": 0 }], [{ "node": "PDF Agent Error Reply", "type": "main", "index": 0 }]] },
+    "AI Agent - PPTX": { "main": [[{ "node": "PPTX HTML Builder", "type": "main", "index": 0 }], [{ "node": "PPTX Agent Error Reply", "type": "main", "index": 0 }]] },
+    "Split Records & Normalize": { "main": [[{ "node": "Google Sheets Append", "type": "main", "index": 0 }]] },
+    "Google Sheets Append": { "main": [[{ "node": "Export Success Reply", "type": "main", "index": 0 }], [{ "node": "Sheets Error Reply", "type": "main", "index": 0 }]] },
+    "PDF HTML Builder": { "main": [[{ "node": "Convert HTML to PDF", "type": "main", "index": 0 }]] },
+    "Convert HTML to PDF": { "main": [[{ "node": "Upload PDF to Drive", "type": "main", "index": 0 }], [{ "node": "PDF Error Reply", "type": "main", "index": 0 }]] },
+    "Upload PDF to Drive": { "main": [[{ "node": "PDF Success Reply", "type": "main", "index": 0 }], [{ "node": "PDF Error Reply", "type": "main", "index": 0 }]] },
+    "PPTX HTML Builder": { "main": [[{ "node": "Upload Slides to Drive", "type": "main", "index": 0 }]] },
+    "Upload Slides to Drive": { "main": [[{ "node": "PPTX Success Reply", "type": "main", "index": 0 }], [{ "node": "PPTX Error Reply", "type": "main", "index": 0 }]] },
+    "Empty Input Reply": { "main": [[{ "node": "Final Response to Chat", "type": "main", "index": 0 }]] },
+    "Unsupported Action": { "main": [[{ "node": "Final Response to Chat", "type": "main", "index": 0 }]] },
+    "Export Success Reply": { "main": [[{ "node": "Final Response to Chat", "type": "main", "index": 0 }]] },
+    "Sheets Error Reply": { "main": [[{ "node": "Final Response to Chat", "type": "main", "index": 0 }]] },
+    "Export Error Reply": { "main": [[{ "node": "Final Response to Chat", "type": "main", "index": 0 }]] },
+    "Response Formatter": { "main": [[{ "node": "Final Response to Chat", "type": "main", "index": 0 }]] },
+    "Query Error Reply": { "main": [[{ "node": "Final Response to Chat", "type": "main", "index": 0 }]] },
+    "KPI Dashboard Formatter": { "main": [[{ "node": "Final Response to Chat", "type": "main", "index": 0 }]] },
+    "KPI Error Reply": { "main": [[{ "node": "Final Response to Chat", "type": "main", "index": 0 }]] },
+    "PDF Success Reply": { "main": [[{ "node": "Final Response to Chat", "type": "main", "index": 0 }]] },
+    "PDF Error Reply": { "main": [[{ "node": "Final Response to Chat", "type": "main", "index": 0 }]] },
+    "PDF Agent Error Reply": { "main": [[{ "node": "Final Response to Chat", "type": "main", "index": 0 }]] },
+    "PPTX Success Reply": { "main": [[{ "node": "Final Response to Chat", "type": "main", "index": 0 }]] },
+    "PPTX Error Reply": { "main": [[{ "node": "Final Response to Chat", "type": "main", "index": 0 }]] },
+    "PPTX Agent Error Reply": { "main": [[{ "node": "Final Response to Chat", "type": "main", "index": 0 }]] },
+    "Mistral Model - Export": { "ai_languageModel": [[{ "node": "AI Agent - Export", "type": "ai_languageModel", "index": 0 }]] },
+    "Buffer Memory - Export": { "ai_memory": [[{ "node": "AI Agent - Export", "type": "ai_memory", "index": 0 }]] },
+    "PostgreSQL Tool - Export": { "ai_tool": [[{ "node": "AI Agent - Export", "type": "ai_tool", "index": 0 }]] },
+    "get_schema - Export": { "ai_tool": [[{ "node": "AI Agent - Export", "type": "ai_tool", "index": 0 }]] },
+    "Mistral Model - Query": { "ai_languageModel": [[{ "node": "AI Agent - Query", "type": "ai_languageModel", "index": 0 }]] },
+    "Buffer Memory - Query": { "ai_memory": [[{ "node": "AI Agent - Query", "type": "ai_memory", "index": 0 }]] },
+    "PostgreSQL Tool - Query": { "ai_tool": [[{ "node": "AI Agent - Query", "type": "ai_tool", "index": 0 }]] },
+    "get_schema - Query": { "ai_tool": [[{ "node": "AI Agent - Query", "type": "ai_tool", "index": 0 }]] },
+    "Mistral Model - KPI": { "ai_languageModel": [[{ "node": "AI Agent - KPI", "type": "ai_languageModel", "index": 0 }]] },
+    "Buffer Memory - KPI": { "ai_memory": [[{ "node": "AI Agent - KPI", "type": "ai_memory", "index": 0 }]] },
+    "PostgreSQL Tool - KPI": { "ai_tool": [[{ "node": "AI Agent - KPI", "type": "ai_tool", "index": 0 }]] },
+    "get_schema - KPI": { "ai_tool": [[{ "node": "AI Agent - KPI", "type": "ai_tool", "index": 0 }]] },
+    "Mistral Model - PDF": { "ai_languageModel": [[{ "node": "AI Agent - PDF", "type": "ai_languageModel", "index": 0 }]] },
+    "Buffer Memory - PDF": { "ai_memory": [[{ "node": "AI Agent - PDF", "type": "ai_memory", "index": 0 }]] },
+    "PostgreSQL Tool - PDF": { "ai_tool": [[{ "node": "AI Agent - PDF", "type": "ai_tool", "index": 0 }]] },
+    "get_schema - PDF": { "ai_tool": [[{ "node": "AI Agent - PDF", "type": "ai_tool", "index": 0 }]] },
+    "Mistral Model - PPTX": { "ai_languageModel": [[{ "node": "AI Agent - PPTX", "type": "ai_languageModel", "index": 0 }]] },
+    "Buffer Memory - PPTX": { "ai_memory": [[{ "node": "AI Agent - PPTX", "type": "ai_memory", "index": 0 }]] },
+    "PostgreSQL Tool - PPTX": { "ai_tool": [[{ "node": "AI Agent - PPTX", "type": "ai_tool", "index": 0 }]] },
+    "get_schema - PPTX": { "ai_tool": [[{ "node": "AI Agent - PPTX", "type": "ai_tool", "index": 0 }]] }
+  },
+  "pinData": {},
+  "settings": { "executionOrder": "v1", "saveManualExecutions": true, "callerPolicy": "workflowsFromSameOwner", "errorWorkflow": "" },
+  "staticData": null,
+  "meta": { "templateCredsSetupCompleted": false, "instanceId": "lawmis-assistant-v3" },
+  "tags": [{ "createdAt": "2026-06-29", "updatedAt": "2026-06-29", "id": "lawmis-tag", "name": "LAWMIS" }]
+}

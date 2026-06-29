@@ -1,0 +1,31 @@
+# ── Core LangChain ──────────────────────────────────────────────────────────
+langchain>=0.3.0
+langchain-community>=0.3.0
+langgraph>=0.2.0
+
+# ── LLM Providers (install whichever you use) ────────────────────────────────
+langchain-mistralai>=0.2.0      # Mistral        → set LLM_PROVIDER=mistral
+langchain-google-genai>=2.0.0   # Google Gemini  → set LLM_PROVIDER=gemini
+langchain-openai>=0.2.0         # OpenAI GPT-4o  → set LLM_PROVIDER=openai
+
+# ── Document processing & report generation ──────────────────────────────────
+python-pptx>=1.0.0      # Read PPTX files + generate KPI PowerPoint
+pypdf>=4.0.0            # Read PDF files for document Q&A
+python-multipart>=0.0.18 # Parse multipart uploads in FastAPI
+reportlab>=4.0.0        # Generate PDF KPI reports
+
+# ── Database ─────────────────────────────────────────────────────────────────
+psycopg2-binary>=2.9.9
+
+# ── Google Sheets ─────────────────────────────────────────────────────────────
+gspread>=6.0.0
+google-auth>=2.28.0
+google-auth-oauthlib>=1.2.0
+
+# ── API server (optional – used when INTERFACE=api) ───────────────────────────
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0
+
+# ── Utilities ─────────────────────────────────────────────────────────────────
+python-dotenv>=1.0.1
+pydantic>=2.7.0
