@@ -13,9 +13,11 @@ venv/
 .venv/
 env/
 .env/
+langchain_lawmus/
 
 # ── Secrets (NEVER commit these) ─────────────────────────────────
 .env
+.env.local
 service_account.json
 credentials.json
 token.json
@@ -33,3 +35,6 @@ Thumbs.db
 # ── Logs ─────────────────────────────────────────────────────────
 *.log
 logs/
+
+# ── Generated exports (PDFs / PPTXs) ─────────────────────────────
+exports/

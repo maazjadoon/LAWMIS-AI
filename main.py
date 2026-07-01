@@ -26,6 +26,7 @@ Full flow (mirrors the n8n workflow exactly):
 """
 
 import logging
+import os
 import sys
 
 import config
@@ -185,9 +186,13 @@ def _build_fastapi_app():
     )
 
     # Enable CORS
+    # In production, set ALLOWED_ORIGINS env var to your Vercel URL (comma-separated)
+    # e.g. ALLOWED_ORIGINS=https://lawmis-ai.vercel.app
+    _raw_origins = os.getenv("ALLOWED_ORIGINS", "*")
+    _origins = [o.strip() for o in _raw_origins.split(",")] if _raw_origins != "*" else ["*"]
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

@@ -15,6 +15,9 @@ interface Doc {
 }
 
 export default function App() {
+  // Backend URL: set VITE_API_BASE_URL in .env.local for dev, or in Vercel dashboard for prod
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+
   const [activeTab, setActiveTab] = useState<'chat' | 'dashboard' | 'documents'>('chat');
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -59,7 +62,7 @@ export default function App() {
   // Load KPI metrics from backend
   const refreshKpis = async () => {
     try {
-      const response = await fetch('http://localhost:8000/chat', {
+      const response = await fetch(`${API_BASE}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -102,7 +105,7 @@ export default function App() {
     setIsTyping(true);
 
     try {
-      const response = await fetch('http://localhost:8000/chat', {
+      const response = await fetch(`${API_BASE}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -156,7 +159,7 @@ export default function App() {
     formData.append('file', file);
 
     try {
-      const response = await fetch('http://localhost:8000/upload', {
+      const response = await fetch(`${API_BASE}/upload`, {
         method: 'POST',
         body: formData,
       });
@@ -246,7 +249,7 @@ export default function App() {
         downloadLink = (
           <div className="mt-2 pt-2 border-t border-white/[0.03] select-none">
             <a 
-              href={`http://localhost:8000/exports/${filename}`} 
+          href={`${API_BASE}/exports/${filename}`} 
               target="_blank" 
               rel="noreferrer" 
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-indigo-600 hover:bg-indigo-500 text-white transition-all duration-300 text-[10px] font-semibold tracking-tight shadow-[0_0_15px_-3px_rgba(99,102,241,0.3)] outline-none"
@@ -405,7 +408,7 @@ export default function App() {
           
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-mono text-zinc-500 px-1.5 py-0.5 rounded bg-white/[0.02] border border-white/[0.03]">
-              http://localhost:8000
+              {API_BASE}
             </span>
           </div>
         </header>
@@ -783,7 +786,7 @@ export default function App() {
                     <div key={doc.id} className="bg-[#090d16] border border-white/[0.03] rounded p-2.5 flex items-center justify-between hover:border-white/[0.08] transition-all duration-300">
                       <div className="flex items-center gap-2">
                         <a 
-                          href={`http://localhost:8000/exports/${doc.name}`} 
+                           href={`${API_BASE}/exports/${doc.name}`} 
                           target="_blank" 
                           rel="noreferrer"
                           className="w-7 h-7 rounded bg-white/[0.02] border border-white/[0.03] flex items-center justify-center text-zinc-400 hover:text-indigo-400 hover:border-indigo-500/30 transition-all duration-300 outline-none"
