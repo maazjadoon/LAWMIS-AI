@@ -267,21 +267,17 @@ def _build_fastapi_app():
 #  Start-up
 # ═══════════════════════════════════════════════════════════════════════════════
 
-if config.INTERFACE == "api":
-    # `app` must be a module-level variable so uvicorn can discover it:
-    #   uvicorn main:app --reload
-    app = _build_fastapi_app()
+app = _build_fastapi_app()
 
-    if __name__ == "__main__":
+if __name__ == "__main__":
+    if config.INTERFACE == "api":
         import uvicorn
+
         uvicorn.run(
             "main:app",
             host=config.API_HOST,
             port=config.API_PORT,
             reload=False,
         )
-
-else:
-    # Default: CLI mode
-    if __name__ == "__main__":
+    else:
         run_cli()
