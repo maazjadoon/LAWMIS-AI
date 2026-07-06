@@ -41,7 +41,9 @@ MISTRAL_MODEL: str = os.getenv("MISTRAL_MODEL", "mistral-large-latest")
 
 # ── PostgreSQL ────────────────────────────────────────────────────────────────
 # Railway injects DATABASE_URL; local Docker uses DB_URL. Accept both.
-DB_URL: str = os.getenv("DB_URL") or os.getenv("DATABASE_URL", "")
+# psycopg2 requires "postgresql://" — Railway often provides "postgres://".
+_raw_db_url: str = os.getenv("DB_URL") or os.getenv("DATABASE_URL", "")
+DB_URL: str = _raw_db_url.replace("postgres://", "postgresql://", 1) if _raw_db_url else ""
 
 # ── Google Sheets ─────────────────────────────────────────────────────────────
 SHEETS_ID: str = os.getenv("SHEETS_ID", "")
@@ -105,8 +107,10 @@ def validate() -> None:
         )
 
     logger.info(
-        "Config loaded — LLM=%s | Interface=%s | Memory=%s",
+        "Config loaded — LLM=%s | Interface=%s | Memory=%s | DB=%s",
         LLM_PROVIDER.upper(),
         INTERFACE.upper(),
         SESSION_MEMORY,
+        # Mask password in log but show host so we can diagnose connection issues
+        DB_URL.split("@")[-1] if "@" in DB_URL else ("SET" if DB_URL else "NOT SET"),
     )
