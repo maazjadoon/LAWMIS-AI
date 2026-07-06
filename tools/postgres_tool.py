@@ -60,8 +60,19 @@ _RETRY_DELAY_SECONDS = 1.0
 
 
 def _get_connection() -> psycopg2.extensions.connection:
-    """Open a fresh psycopg2 connection using DB_URL from config."""
-    return psycopg2.connect(config.DB_URL)
+    """Open a fresh psycopg2 connection using DB_URL from config.
+
+    Railway and most managed Postgres providers require SSL.
+    We pass sslmode=require unless the URL already contains sslmode.
+    """
+    url = config.DB_URL
+    if not url:
+        raise RuntimeError("DB_URL / DATABASE_URL is not set. Check Railway environment variables.")
+    # Add sslmode=require for Railway unless already specified
+    if "sslmode" not in url:
+        sep = "&" if "?" in url else "?"
+        url = f"{url}{sep}sslmode=require"
+    return psycopg2.connect(url)
 
 
 def _run_select(sql: str) -> list[dict[str, Any]]:
