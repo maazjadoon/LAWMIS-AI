@@ -35,6 +35,11 @@ import config
 # This will raise EnvironmentError early if required vars are missing.
 config.validate()
 
+# ── Auto-initialise DB schema (safe no-op if tables already exist) ─────────────
+# Required on Railway/cloud hosts where docker-entrypoint-initdb.d doesn't run.
+from db_init import init_db
+init_db(config.DB_URL)
+
 logger = logging.getLogger(__name__)
 
 # ── Import application modules ─────────────────────────────────────────────────

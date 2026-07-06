@@ -40,7 +40,8 @@ MISTRAL_API_KEY: str = os.getenv("MISTRAL_API_KEY", "")
 MISTRAL_MODEL: str = os.getenv("MISTRAL_MODEL", "mistral-large-latest")
 
 # ── PostgreSQL ────────────────────────────────────────────────────────────────
-DB_URL: str = os.getenv("DB_URL", "")
+# Railway injects DATABASE_URL; local Docker uses DB_URL. Accept both.
+DB_URL: str = os.getenv("DB_URL") or os.getenv("DATABASE_URL", "")
 
 # ── Google Sheets ─────────────────────────────────────────────────────────────
 SHEETS_ID: str = os.getenv("SHEETS_ID", "")
